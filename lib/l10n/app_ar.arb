@@ -64,7 +64,6 @@
   "popular": "الأكثر طلبًا",
   "soldOut": "نفدت الكمية",
 
-  "addedToOrder": "تمت إضافة {quantity} × {name} إلى طلبك",
   "optional": "اختياري",
   "specialInstructions": "تعليمات خاصة",
   "specialInstructionsHint": "مثال: ساخن جدًا، بدون قرفة",
@@ -151,7 +150,7 @@
   "orderNotesHint": "هل هناك ما يجب أن يعرفه المطعم؟ (اختياري)",
   "cardSection": "بيانات البطاقة",
   "cardNumber": "رقم البطاقة",
-  "cardExpiry": "تاريخ الانتهاء (MM/YY)",
+  "cardExpiry": "تاريخ الانتهاء",
   "cardCvc": "رمز التحقق CVC",
   "cardHolderName": "الاسم على البطاقة",
   "cardNumberInvalid": "أدخل رقم بطاقة صحيحًا",
@@ -163,5 +162,6 @@
   "totalConfirmedByServer": "يتم تأكيد المبلغ النهائي عند الدفع.",
   "payNow": "ادفع الآن",
   "cardEndingIn": "بطاقة •••• {last4}",
-  "reference": "المرجع"
+  "reference": "المرجع",
+  "cardCvcBackHint": "رمز التحقق هو آخر 3 أو 4 أرقام على ظهر البطاقة"
 }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../domain/entities/product.dart';
+import 'menu_visuals.dart';
 
-/// Product photo, or a category-tinted illustration when the POS item has
-/// no image yet.
+/// Product photo, or an illustration guessed from the product and category
+/// names when the POS item has no image yet.
 class ProductArtwork extends StatelessWidget {
   const ProductArtwork({
     super.key,
@@ -19,30 +19,55 @@ class ProductArtwork extends StatelessWidget {
   final double radius;
   final double iconSize;
 
-  /// [category] is a category id or English name; see
-  /// [AppColors.categoryKey].
-  static IconData iconFor(String? category) =>
-      switch (AppColors.categoryKey(category)) {
-        'hot_beverages' => Icons.coffee_rounded,
-        'cold_beverages' => Icons.local_drink_rounded,
-        'desserts' => Icons.cake_rounded,
-        _ => Icons.restaurant_rounded,
-      };
+  static MenuVisual visualFor(Product product) => MenuVisuals.of([
+    product.name,
+    product.category,
+    product.categoryId,
+  ], seed: product.categoryId ?? product.category);
 
   @override
   Widget build(BuildContext context) {
-    final categoryKey = product.categoryId ?? product.category;
-    final [bg, fg] = AppColors.tintFor(categoryKey);
+    final visual = visualFor(product);
     final placeholder = DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [bg, Color.lerp(bg, fg, 0.18)!],
+          colors: [visual.soft, Color.lerp(visual.soft, visual.tint, 0.22)!],
         ),
       ),
-      child: Center(
-        child: Icon(iconFor(categoryKey), size: iconSize, color: fg),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final side = constraints.biggest.shortestSide;
+          return Stack(
+            clipBehavior: Clip.hardEdge,
+            children: [
+              if (side.isFinite && side > 80)
+                PositionedDirectional(
+                  end: -side * 0.18,
+                  top: -side * 0.18,
+                  child: Transform.rotate(
+                    angle: -0.35,
+                    child: Icon(
+                      visual.icon,
+                      size: side * 0.75,
+                      color: visual.tint.withValues(alpha: 0.08),
+                    ),
+                  ),
+                ),
+              Center(
+                child: Container(
+                  padding: EdgeInsets.all(iconSize * 0.32),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.55),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(visual.icon, size: iconSize, color: visual.tint),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
 

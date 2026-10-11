@@ -10,6 +10,7 @@ import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/animated_amount.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/status_view.dart';
 import '../../../../injection_container.dart';
@@ -22,6 +23,7 @@ import '../../../table_session/presentation/widgets/table_session_gate.dart';
 import '../../data/repositories/order_repository_impl.dart';
 import '../cubit/checkout_cubit.dart';
 import '../widgets/card_form.dart';
+import '../widgets/credit_card_preview.dart';
 
 class CartSummaryScreen extends StatelessWidget {
   const CartSummaryScreen({super.key, required this.qrId});
@@ -93,9 +95,11 @@ class _CheckoutViewState extends State<_CheckoutView> {
   void _onCheckoutChanged(BuildContext context, CheckoutState state) {
     switch (state.status) {
       case CheckoutStatus.success:
+        HapticFeedback.mediumImpact();
         context.read<CartCubit>().clear();
         context.go(AppRoutes.success(_session.qrId), extra: state.receipt);
       case CheckoutStatus.failure:
+        HapticFeedback.heavyImpact();
         final error = state.error;
         if (error is CardDeclinedException) _card.cvc.clear();
         if (error is OrderRejectedException) _reloadMenu();
@@ -115,7 +119,6 @@ class _CheckoutViewState extends State<_CheckoutView> {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
     final l10n = context.l10n;
     return BlocListener<CheckoutCubit, CheckoutState>(
       listenWhen: (a, b) => a.status != b.status,
@@ -124,19 +127,6 @@ class _CheckoutViewState extends State<_CheckoutView> {
         appBar: AppBar(
           leading: BackButton(onPressed: _backToMenu),
           title: Text(l10n.reviewAndPay),
-          actions: [
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: 16),
-              child: Center(
-                child: Text(
-                  l10n.tableNumber(_session.tableName),
-                  style: textTheme.labelLarge?.copyWith(
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ],
         ),
         body: BlocBuilder<CartCubit, CartState>(
           builder: (context, cart) {
@@ -161,7 +151,7 @@ class _CheckoutViewState extends State<_CheckoutView> {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 140),
                     children: [
-                      TableHeader(session: _session),
+                      _OrderContext(session: _session, cart: cart),
                       const SizedBox(height: 16),
                       _Section(
                         title: l10n.itemsSection,
@@ -201,6 +191,8 @@ class _CheckoutViewState extends State<_CheckoutView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            CreditCardPreview(controllers: _card),
+                            const SizedBox(height: 20),
                             CardForm(controllers: _card, enabled: !processing),
                             const SizedBox(height: 12),
                             _Hint(
@@ -370,15 +362,74 @@ class _PayBar extends StatelessWidget {
               icon: Icons.lock_outline_rounded,
               isLoading: processing,
               onPressed: processing ? null : onPay,
-              trailing: Text(
-                CurrencyFormatter.format(
-                  cart.total(session.vatRate),
-                  currency: session.currency,
-                ),
+              trailing: AnimatedAmount(
+                amount: cart.total(session.vatRate),
+                currency: session.currency,
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Compact branch / table / item count strip on top of the checkout.
+class _OrderContext extends StatelessWidget {
+  const _OrderContext({required this.session, required this.cart});
+
+  final TableSession session;
+  final CartState cart;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final l10n = context.l10n;
+    return Container(
+      padding: const EdgeInsetsDirectional.fromSTEB(12, 12, 12, 12),
+      decoration: BoxDecoration(
+        gradient: AppColors.heroGradient,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        boxShadow: AppColors.glow(AppColors.primaryDark),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Image.asset('assets/images/zood_mark.png'),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  session.branchName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  '${l10n.dineIn} · ${l10n.itemCount(cart.totalQuantity)}',
+                  style: textTheme.bodySmall?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.75),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          TableBadge(tableName: session.tableName),
+        ],
       ),
     );
   }

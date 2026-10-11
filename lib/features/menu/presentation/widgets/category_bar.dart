@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/localization/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../cubit/menu_cubit.dart';
-import 'product_artwork.dart';
+import 'menu_visuals.dart';
 
-class CategoryBar extends StatelessWidget {
+class CategoryBar extends StatefulWidget {
   const CategoryBar({
     super.key,
     required this.categories,
@@ -26,29 +28,81 @@ class CategoryBar extends StatelessWidget {
   static const double height = 64;
 
   @override
+  State<CategoryBar> createState() => _CategoryBarState();
+}
+
+class _CategoryBarState extends State<CategoryBar> {
+  final ScrollController _scroll = ScrollController();
+  final Map<String, GlobalKey> _chipKeys = {};
+
+  GlobalKey _keyFor(String category) =>
+      _chipKeys.putIfAbsent(category, GlobalKey.new);
+
+  @override
+  void didUpdateWidget(CategoryBar old) {
+    super.didUpdateWidget(old);
+    if (old.selected != widget.selected) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _revealSelected());
+    }
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  /// Scrolls only this bar; `Scrollable.ensureVisible` would also move the
+  /// menu list the bar is pinned in.
+  void _revealSelected() {
+    if (!mounted || !_scroll.hasClients) return;
+    final chip = _chipKeys[widget.selected]?.currentContext?.findRenderObject();
+    if (chip == null || !chip.attached) return;
+    final position = _scroll.position;
+    final target = RenderAbstractViewport.of(chip)
+        .getOffsetToReveal(chip, 0.5)
+        .offset
+        .clamp(position.minScrollExtent, position.maxScrollExtent);
+    if ((target - position.pixels).abs() < 1) return;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _scroll.jumpTo(target);
+    } else {
+      _scroll.animateTo(
+        target,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return SizedBox(
-      height: height,
+      height: CategoryBar.height,
       child: ListView.separated(
+        controller: _scroll,
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
         clipBehavior: Clip.none,
-        itemCount: categories.length,
+        itemCount: widget.categories.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final category = categories[index];
-          final isSelected = category == selected;
+          final category = widget.categories[index];
+          final isSelected = category == widget.selected;
           final isAll = category == MenuState.allCategory;
-          final icon = isAll
-              ? Icons.restaurant_menu_rounded
-              : ProductArtwork.iconFor(
-                  categoryIdOf?.call(category) ?? category,
+          final visual = isAll
+              ? const MenuVisual(
+                  Icons.restaurant_menu_rounded,
+                  AppColors.primarySoft,
+                  AppColors.primary,
+                )
+              : MenuVisuals.forCategory(
+                  category,
+                  id: widget.categoryIdOf?.call(category),
                 );
-          final tint = isAll
-              ? AppColors.primary
-              : AppColors.tintFor(categoryIdOf?.call(category) ?? category)[1];
           return Semantics(
+            key: _keyFor(category),
             selected: isSelected,
             button: true,
             child: AnimatedContainer(
@@ -69,7 +123,10 @@ class CategoryBar extends StatelessWidget {
                 type: MaterialType.transparency,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(40),
-                  onTap: () => onSelected(category),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    widget.onSelected(category);
+                  },
                   child: Padding(
                     padding: const EdgeInsetsDirectional.fromSTEB(6, 0, 12, 0),
                     child: Row(
@@ -81,13 +138,13 @@ class CategoryBar extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? Colors.white.withValues(alpha: 0.2)
-                                : tint.withValues(alpha: 0.12),
+                                : visual.soft,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            icon,
+                            visual.icon,
                             size: 16,
-                            color: isSelected ? Colors.white : tint,
+                            color: isSelected ? Colors.white : visual.tint,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -111,7 +168,7 @@ class CategoryBar extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            '${countFor(category)}',
+                            '${widget.countFor(category)}',
                             style: textTheme.labelSmall?.copyWith(
                               color: isSelected
                                   ? Colors.white

@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +10,7 @@ import '../../../../core/localization/l10n.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
+import '../../../../core/widgets/fly_to_cart.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/loading_indicator.dart';
 import '../../../../core/widgets/status_view.dart';
@@ -19,6 +21,7 @@ import '../../../cart/presentation/cubit/cart_cubit.dart';
 import '../cubit/menu_cubit.dart';
 import '../../../cart/presentation/widgets/cart_bottom_sheet.dart';
 import '../widgets/category_bar.dart';
+import '../widgets/menu_visuals.dart';
 import '../widgets/product_artwork.dart';
 import '../widgets/product_card.dart';
 import '../../../table_session/presentation/widgets/table_header.dart';
@@ -54,6 +57,15 @@ class _MenuViewState extends State<_MenuView> {
 
   final ScrollController _scroll = ScrollController();
   final TextEditingController _search = TextEditingController();
+  final GlobalKey _cartTarget = GlobalKey(debugLabel: 'cart-target');
+
+  /// Section header keys, in menu order, for the category scroll-spy.
+  final Map<String, GlobalKey> _sectionKeys = {};
+  List<String> _sections = const [];
+  final ValueNotifier<String?> _activeSection = ValueNotifier(null);
+
+  /// Set while a chip tap scrolls the menu, so the spy doesn't fight it.
+  bool _scrollingToSection = false;
 
   TableSession get _session => widget.session;
 
@@ -61,13 +73,88 @@ class _MenuViewState extends State<_MenuView> {
   void initState() {
     super.initState();
     context.read<MenuCubit>().load(_session);
+    _scroll.addListener(_scheduleSync);
   }
 
   @override
   void dispose() {
     _scroll.dispose();
     _search.dispose();
+    _activeSection.dispose();
     super.dispose();
+  }
+
+  GlobalKey _sectionKey(String category) =>
+      _sectionKeys.putIfAbsent(category, GlobalKey.new);
+
+  /// Height covered by the pinned category bar at the top of the list.
+  double get _pinnedExtent => CategoryBar.height;
+
+  RenderBox? _sectionBox(String category) {
+    final box = _sectionKeys[category]?.currentContext?.findRenderObject();
+    return box is RenderBox && box.attached ? box : null;
+  }
+
+  bool _syncScheduled = false;
+
+  /// Scroll notifications arrive before the new layout, so header positions
+  /// are read after the frame.
+  void _scheduleSync() {
+    if (_syncScheduled) return;
+    _syncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncScheduled = false;
+      if (mounted) _syncActiveSection();
+    });
+  }
+
+  /// Highlights the last section whose header has reached the pinned bar.
+  void _syncActiveSection() {
+    if (_scrollingToSection || _sections.isEmpty || !_scroll.hasClients) {
+      return;
+    }
+    final viewport = _scroll.position.context.notificationContext
+        ?.findRenderObject();
+    if (viewport is! RenderBox) return;
+    var active = _sections.first;
+    final position = _scroll.position;
+    if (position.pixels >= position.maxScrollExtent - 4) {
+      active = _sections.last;
+    } else {
+      for (final section in _sections) {
+        final box = _sectionBox(section);
+        if (box == null) continue;
+        final top = box.localToGlobal(Offset.zero, ancestor: viewport).dy;
+        if (top <= _pinnedExtent + 24) active = section;
+      }
+    }
+    _activeSection.value = active;
+  }
+
+  Future<void> _scrollToSection(String category) async {
+    final box = _sectionBox(category);
+    if (box == null || !_scroll.hasClients) return;
+    _activeSection.value = category;
+    final position = _scroll.position;
+    final target =
+        (RenderAbstractViewport.of(box).getOffsetToReveal(box, 0).offset -
+                _pinnedExtent -
+                4)
+            .clamp(position.minScrollExtent, position.maxScrollExtent);
+    _scrollingToSection = true;
+    try {
+      if (MediaQuery.disableAnimationsOf(context)) {
+        _scroll.jumpTo(target);
+      } else {
+        await _scroll.animateTo(
+          target,
+          duration: const Duration(milliseconds: 450),
+          curve: Curves.easeInOutCubic,
+        );
+      }
+    } finally {
+      _scrollingToSection = false;
+    }
   }
 
   void _goToCheckout() => context.push(AppRoutes.cart(_session.qrId));
@@ -86,7 +173,7 @@ class _MenuViewState extends State<_MenuView> {
 
   /// Adds with the default options; opens the sheet when a required
   /// modifier still needs a choice.
-  void _quickAdd(Product product) {
+  void _quickAdd(Product product, Rect origin) {
     final selection = ModifierSelection.initial(product);
     if (!selection.isValid) {
       _openProduct(product);
@@ -96,6 +183,17 @@ class _MenuViewState extends State<_MenuView> {
       product,
       options: selection.selectedOptions,
     );
+    FlyToCart.run(
+      context,
+      from: origin,
+      target: _cartTarget,
+      icon: ProductArtwork.visualFor(product).icon,
+    );
+    // The flight already confirms the add; the toast is kept to offer
+    // "Customize", or as the only feedback when motion is reduced.
+    if (!product.hasModifiers && !MediaQuery.disableAnimationsOf(context)) {
+      return;
+    }
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -129,6 +227,7 @@ class _MenuViewState extends State<_MenuView> {
                     width: _sidePanelWidth,
                     session: _session,
                     onCheckout: _goToCheckout,
+                    targetKey: _cartTarget,
                   ),
                 ],
               );
@@ -148,6 +247,7 @@ class _MenuViewState extends State<_MenuView> {
                         child: FloatingCartBar(
                           session: _session,
                           onPressed: _openCart,
+                          badgeKey: _cartTarget,
                         ),
                       ),
                     ),
@@ -170,16 +270,21 @@ class _MenuViewState extends State<_MenuView> {
         );
         return BlocBuilder<MenuCubit, MenuState>(
           builder: (context, menu) {
-            return RefreshIndicator(
-              color: AppColors.primary,
-              onRefresh: () => context.read<MenuCubit>().retry(),
-              child: CustomScrollView(
-                controller: _scroll,
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  SliverSafeArea(
-                    bottom: false,
-                    sliver: SliverPadding(
+            final groups = _groupVisible(menu);
+            _sections = groups.keys.toList(growable: false);
+            _scheduleSync();
+            // The list starts below the status bar so the category bar pins
+            // under it instead of behind it.
+            return SafeArea(
+              bottom: false,
+              child: RefreshIndicator(
+                color: AppColors.primary,
+                onRefresh: () => context.read<MenuCubit>().retry(),
+                child: CustomScrollView(
+                  controller: _scroll,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverPadding(
                       padding: EdgeInsets.fromLTRB(gutter, 12, gutter, 12),
                       sliver: SliverToBoxAdapter(
                         child: Column(
@@ -194,34 +299,29 @@ class _MenuViewState extends State<_MenuView> {
                         ),
                       ),
                     ),
-                  ),
-                  if (menu.status == MenuStatus.loaded &&
-                      menu.products.isNotEmpty)
-                    SliverPersistentHeader(
-                      pinned: true,
-                      delegate: _CategoryHeaderDelegate(
-                        gutter: gutter - 16,
-                        child: CategoryBar(
-                          categories: menu.categories,
-                          selected: menu.selectedCategory,
-                          countFor: menu.countFor,
-                          categoryIdOf: menu.categoryIdOf,
-                          onSelected: (c) {
-                            context.read<MenuCubit>().selectCategory(c);
-                            if (_scroll.hasClients && _scroll.offset > 140) {
-                              _scroll.animateTo(
-                                140,
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeOut,
-                              );
-                            }
-                          },
+                    if (menu.status == MenuStatus.loaded && groups.isNotEmpty)
+                      SliverPersistentHeader(
+                        pinned: true,
+                        delegate: _CategoryHeaderDelegate(
+                          gutter: gutter - 16,
+                          child: ValueListenableBuilder<String?>(
+                            valueListenable: _activeSection,
+                            builder: (context, active, _) => CategoryBar(
+                              categories: _sections,
+                              selected: _sections.contains(active)
+                                  ? active!
+                                  : _sections.first,
+                              countFor: (c) => groups[c]?.length ?? 0,
+                              categoryIdOf: menu.categoryIdOf,
+                              onSelected: _scrollToSection,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ..._buildContent(menu, gutter),
-                  SliverToBoxAdapter(child: SizedBox(height: bottomInset)),
-                ],
+                    ..._buildContent(menu, gutter, groups),
+                    SliverToBoxAdapter(child: SizedBox(height: bottomInset)),
+                  ],
+                ),
               ),
             );
           },
@@ -230,7 +330,21 @@ class _MenuViewState extends State<_MenuView> {
     );
   }
 
-  List<Widget> _buildContent(MenuState menu, double gutter) {
+  /// Visible products by category, in menu order (empty unless loaded).
+  Map<String, List<Product>> _groupVisible(MenuState menu) {
+    final groups = <String, List<Product>>{};
+    if (menu.status != MenuStatus.loaded) return groups;
+    for (final p in menu.visibleProducts) {
+      (groups[p.category] ??= []).add(p);
+    }
+    return groups;
+  }
+
+  List<Widget> _buildContent(
+    MenuState menu,
+    double gutter,
+    Map<String, List<Product>> groups,
+  ) {
     final l10n = context.l10n;
     switch (menu.status) {
       case MenuStatus.initial:
@@ -290,8 +404,7 @@ class _MenuViewState extends State<_MenuView> {
             ),
           ];
         }
-        final visible = menu.visibleProducts;
-        if (visible.isEmpty) {
+        if (groups.isEmpty) {
           return [
             SliverFillRemaining(
               hasScrollBody: false,
@@ -317,10 +430,6 @@ class _MenuViewState extends State<_MenuView> {
             ),
           ];
         }
-        final groups = <String, List<Product>>{};
-        for (final p in visible) {
-          (groups[p.category] ??= []).add(p);
-        }
         return [
           for (final entry in groups.entries) ...[
             SliverPadding(
@@ -332,6 +441,7 @@ class _MenuViewState extends State<_MenuView> {
               ),
               sliver: SliverToBoxAdapter(
                 child: _SectionTitle(
+                  key: _sectionKey(entry.key),
                   title: entry.key,
                   categoryId: menu.categoryIdOf(entry.key),
                   count: entry.value.length,
@@ -364,7 +474,7 @@ class _ProductGrid extends StatelessWidget {
   final List<Product> products;
   final String currency;
   final ValueChanged<Product> onTap;
-  final ValueChanged<Product> onQuickAdd;
+  final void Function(Product product, Rect origin) onQuickAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -385,7 +495,7 @@ class _ProductGrid extends StatelessWidget {
             currency: currency,
             quantityInCart: cart.quantityOf(product.id),
             onTap: () => onTap(product),
-            onQuickAdd: () => onQuickAdd(product),
+            onQuickAdd: (origin) => onQuickAdd(product, origin),
           );
         },
       ),
@@ -395,6 +505,7 @@ class _ProductGrid extends StatelessWidget {
 
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle({
+    super.key,
     required this.title,
     required this.count,
     this.categoryId,
@@ -407,8 +518,9 @@ class _SectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final key = categoryId ?? title;
-    final [soft, tint] = AppColors.tintFor(key);
+    final visual = MenuVisuals.forCategory(title, id: categoryId);
+    final soft = visual.soft;
+    final tint = visual.tint;
     return Row(
       children: [
         Container(
@@ -418,7 +530,7 @@ class _SectionTitle extends StatelessWidget {
             color: soft,
             borderRadius: BorderRadius.circular(11),
           ),
-          child: Icon(ProductArtwork.iconFor(key), size: 18, color: tint),
+          child: Icon(visual.icon, size: 18, color: tint),
         ),
         const SizedBox(width: 10),
         Text(
@@ -546,11 +658,15 @@ class _SideCartPanel extends StatelessWidget {
     required this.width,
     required this.session,
     required this.onCheckout,
+    required this.targetKey,
   });
 
   final double width;
   final TableSession session;
   final VoidCallback onCheckout;
+
+  /// Where quick-added items fly to.
+  final GlobalKey targetKey;
 
   @override
   Widget build(BuildContext context) {
@@ -567,7 +683,7 @@ class _SideCartPanel extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
               child: Row(
                 children: [
-                  const Icon(Icons.shopping_bag_outlined),
+                  Icon(key: targetKey, Icons.shopping_bag_outlined),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(

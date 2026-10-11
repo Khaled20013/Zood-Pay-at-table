@@ -428,12 +428,6 @@ abstract class AppLocalizations {
   /// **'Sold out'**
   String get soldOut;
 
-  /// No description provided for @addedToOrder.
-  ///
-  /// In en, this message translates to:
-  /// **'{quantity} × {name} added to your order'**
-  String addedToOrder(int quantity, String name);
-
   /// No description provided for @optional.
   ///
   /// In en, this message translates to:
@@ -911,7 +905,7 @@ abstract class AppLocalizations {
   /// No description provided for @cardExpiry.
   ///
   /// In en, this message translates to:
-  /// **'Expiry (MM/YY)'**
+  /// **'Expiry'**
   String get cardExpiry;
 
   /// No description provided for @cardCvc.
@@ -985,6 +979,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reference'**
   String get reference;
+
+  /// No description provided for @cardCvcBackHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The security code is the 3–4 digits on the back of your card'**
+  String get cardCvcBackHint;
 }
 
 class _AppLocalizationsDelegate

@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/localization/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../domain/entities/card_brand.dart';
 import '../../domain/entities/card_details.dart';
+import 'credit_card_preview.dart';
 
 /// Controllers for the card fields. The owning screen disposes them, so
 /// card data never outlives the checkout route.
@@ -12,6 +14,9 @@ class CardFormControllers {
   final number = TextEditingController();
   final expiry = TextEditingController();
   final cvc = TextEditingController();
+
+  /// The preview flips to the card's back while this has focus.
+  final cvcFocus = FocusNode();
 
   CardDetails toCard() => CardDetails.fromInput(
     holderName: holderName.text,
@@ -25,6 +30,7 @@ class CardFormControllers {
       c.clear();
       c.dispose();
     }
+    cvcFocus.dispose();
   }
 }
 
@@ -45,6 +51,26 @@ class CardForm extends StatelessWidget {
             label: l10n.cardNumber,
             hint: '0000 0000 0000 0000',
             icon: Icons.credit_card_rounded,
+            suffix: ValueListenableBuilder(
+              valueListenable: controllers.number,
+              builder: (context, value, _) {
+                final brand = CardBrand.of(CardDetails.digitsOnly(value.text));
+                return AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  child: brand == CardBrand.unknown
+                      ? const SizedBox.shrink()
+                      : Padding(
+                          key: ValueKey(brand),
+                          padding: const EdgeInsetsDirectional.only(end: 12),
+                          child: CardBrandMark(
+                            brand: brand,
+                            height: 18,
+                            onLight: true,
+                          ),
+                        ),
+                );
+              },
+            ),
             keyboardType: TextInputType.number,
             autofillHints: const [AutofillHints.creditCardNumber],
             inputFormatters: [
@@ -81,6 +107,7 @@ class CardForm extends StatelessWidget {
               Expanded(
                 child: _field(
                   controller: controllers.cvc,
+                  focusNode: controllers.cvcFocus,
                   label: l10n.cardCvc,
                   hint: '123',
                   keyboardType: TextInputType.number,
@@ -123,6 +150,8 @@ class CardForm extends StatelessWidget {
     required String hint,
     required FormFieldValidator<String> validator,
     IconData? icon,
+    Widget? suffix,
+    FocusNode? focusNode,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
     Iterable<String>? autofillHints,
@@ -132,6 +161,7 @@ class CardForm extends StatelessWidget {
   }) {
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
       enabled: enabled,
       validator: validator,
       keyboardType: keyboardType,
@@ -153,6 +183,8 @@ class CardForm extends StatelessWidget {
         prefixIcon: icon == null
             ? null
             : Icon(icon, color: AppColors.inkMuted, size: 20),
+        suffixIcon: suffix,
+        suffixIconConstraints: const BoxConstraints(minHeight: 24),
       ),
     );
   }

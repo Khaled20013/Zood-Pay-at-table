@@ -203,11 +203,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get soldOut => 'Sold out';
 
   @override
-  String addedToOrder(int quantity, String name) {
-    return '$quantity × $name added to your order';
-  }
-
-  @override
   String get optional => 'Optional';
 
   @override
@@ -479,7 +474,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cardNumber => 'Card number';
 
   @override
-  String get cardExpiry => 'Expiry (MM/YY)';
+  String get cardExpiry => 'Expiry';
 
   @override
   String get cardCvc => 'CVC';
@@ -521,4 +516,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reference => 'Reference';
+
+  @override
+  String get cardCvcBackHint =>
+      'The security code is the 3–4 digits on the back of your card';
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../localization/l10n.dart';
 import '../theme/app_colors.dart';
@@ -49,12 +50,20 @@ class QuantityStepper extends StatelessWidget {
           ),
           ConstrainedBox(
             constraints: BoxConstraints(minWidth: compact ? 26 : 34),
-            child: Text(
-              '$quantity',
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontSize: compact ? 14 : 16),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              transitionBuilder: (child, animation) => ScaleTransition(
+                scale: Tween(begin: 0.5, end: 1.0).animate(animation),
+                child: FadeTransition(opacity: animation, child: child),
+              ),
+              child: Text(
+                '$quantity',
+                key: ValueKey(quantity),
+                textAlign: TextAlign.center,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontSize: compact ? 14 : 16),
+              ),
             ),
           ),
           _StepButton(
@@ -97,7 +106,12 @@ class _StepButton extends StatelessWidget {
         shape: const CircleBorder(),
         child: InkWell(
           customBorder: const CircleBorder(),
-          onTap: onPressed,
+          onTap: enabled
+              ? () {
+                  HapticFeedback.selectionClick();
+                  onPressed!();
+                }
+              : null,
           child: SizedBox.square(
             dimension: size - 6,
             child: Icon(

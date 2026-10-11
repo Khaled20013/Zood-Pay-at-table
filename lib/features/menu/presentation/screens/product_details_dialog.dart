@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/localization/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../domain/entities/modifier_selection.dart';
@@ -92,16 +91,7 @@ class _ProductDetailsDialogState extends State<ProductDetailsDialog> {
       quantity: _quantity,
       notes: _notes.text,
     );
-    final messenger = ScaffoldMessenger.maybeOf(context);
     Navigator.of(context).pop();
-    messenger
-      ?..hideCurrentSnackBar()
-      ..showSnackBar(
-        menuSnackBar(
-          context,
-          message: context.l10n.addedToOrder(_quantity, _product.name),
-        ),
-      );
   }
 
   @override

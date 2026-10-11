@@ -73,8 +73,6 @@
   "popular": "Popular",
   "soldOut": "Sold out",
 
-  "addedToOrder": "{quantity} × {name} added to your order",
-  "@addedToOrder": { "placeholders": { "quantity": { "type": "int" }, "name": { "type": "String" } } },
   "optional": "Optional",
   "specialInstructions": "Special instructions",
   "specialInstructionsHint": "e.g. Extra hot, no cinnamon",
@@ -172,7 +170,7 @@
   "orderNotesHint": "Anything the restaurant should know? (optional)",
   "cardSection": "Card details",
   "cardNumber": "Card number",
-  "cardExpiry": "Expiry (MM/YY)",
+  "cardExpiry": "Expiry",
   "cardCvc": "CVC",
   "cardHolderName": "Name on card",
   "cardNumberInvalid": "Enter a valid card number",
@@ -185,5 +183,6 @@
   "payNow": "Pay now",
   "cardEndingIn": "Card •••• {last4}",
   "@cardEndingIn": {"placeholders": {"last4": {"type": "String"}}},
-  "reference": "Reference"
+  "reference": "Reference",
+  "cardCvcBackHint": "The security code is the 3–4 digits on the back of your card"
 }

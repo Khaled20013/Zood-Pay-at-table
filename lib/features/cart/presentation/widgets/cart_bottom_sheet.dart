@@ -5,6 +5,7 @@ import '../../../../core/localization/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/animated_amount.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../domain/entities/cart_item.dart';
 import '../../../table_session/domain/entities/table_session.dart';
@@ -18,10 +19,14 @@ class FloatingCartBar extends StatelessWidget {
     super.key,
     required this.session,
     required this.onPressed,
+    this.badgeKey,
   });
 
   final TableSession session;
   final VoidCallback onPressed;
+
+  /// Put on the item-count badge, where quick-added items fly to.
+  final GlobalKey? badgeKey;
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +69,7 @@ class FloatingCartBar extends StatelessWidget {
                           builder: (context, scale, child) =>
                               Transform.scale(scale: scale, child: child),
                           child: Container(
+                            key: badgeKey,
                             width: 42,
                             height: 42,
                             alignment: Alignment.center,
@@ -116,11 +122,9 @@ class FloatingCartBar extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                CurrencyFormatter.format(
-                                  cart.total(session.vatRate),
-                                  currency: session.currency,
-                                ),
+                              AnimatedAmount(
+                                amount: cart.total(session.vatRate),
+                                currency: session.currency,
                                 style: textTheme.titleMedium?.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,

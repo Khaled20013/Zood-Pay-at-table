@@ -205,11 +205,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get soldOut => 'نفدت الكمية';
 
   @override
-  String addedToOrder(int quantity, String name) {
-    return 'تمت إضافة $quantity × $name إلى طلبك';
-  }
-
-  @override
   String get optional => 'اختياري';
 
   @override
@@ -479,7 +474,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cardNumber => 'رقم البطاقة';
 
   @override
-  String get cardExpiry => 'تاريخ الانتهاء (MM/YY)';
+  String get cardExpiry => 'تاريخ الانتهاء';
 
   @override
   String get cardCvc => 'رمز التحقق CVC';
@@ -520,4 +515,8 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get reference => 'المرجع';
+
+  @override
+  String get cardCvcBackHint =>
+      'رمز التحقق هو آخر 3 أو 4 أرقام على ظهر البطاقة';
 }
