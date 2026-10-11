@@ -1,0 +1,35 @@
+{
+    "name": "Zood · Pay at Table",
+    "short_name": "Zood",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#0B1E66",
+    "theme_color": "#1F4EE5",
+    "description": "Scan the table QR, order and pay from your seat.",
+    "orientation": "any",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
