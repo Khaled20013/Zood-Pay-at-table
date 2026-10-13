@@ -387,6 +387,7 @@ class ProductCardSkeleton extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg - 2),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.55)),
         boxShadow: AppColors.softShadow,
       ),
       child: const Row(
@@ -397,13 +398,19 @@ class ProductCardSkeleton extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SkeletonBox(width: 130, height: 16),
-                  SizedBox(height: 10),
-                  SkeletonBox(height: 10),
+                  SkeletonBox(width: 130, height: 16, radius: 6),
+                  SizedBox(height: 12),
+                  SkeletonBox(height: 10, radius: 5),
                   SizedBox(height: 6),
-                  SkeletonBox(width: 160, height: 10),
+                  SkeletonBox(width: 150, height: 10, radius: 5),
                   Spacer(),
-                  SkeletonBox(width: 80, height: 16),
+                  Row(
+                    children: [
+                      SkeletonBox(width: 72, height: 18, radius: 6),
+                      Spacer(),
+                      SkeletonBox(width: 36, height: 36, radius: 18),
+                    ],
+                  ),
                 ],
               ),
             ),

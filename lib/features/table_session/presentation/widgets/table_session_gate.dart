@@ -5,11 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/error/app_exception.dart';
 import '../../../../core/localization/l10n.dart';
 import '../../../../core/routing/app_router.dart';
-import '../../../../core/widgets/loading_indicator.dart';
 import '../../../../core/widgets/status_view.dart';
 import '../../domain/entities/table_session.dart';
 import '../../../cart/presentation/cubit/cart_cubit.dart';
 import '../cubit/table_session_cubit.dart';
+import 'finding_table_loader.dart';
 
 /// Ensures [qrId] is resolved before building [builder], so the QR link
 /// (`/pay-at-table/<qr_id>/menu`) and deep links to `/cart` work without
@@ -55,9 +55,7 @@ class _TableSessionGateState extends State<TableSessionGate> {
         if (state.status == TableSessionStatus.failure) {
           return Scaffold(body: TableErrorView(error: state.error));
         }
-        return Scaffold(
-          body: LoadingIndicator(message: context.l10n.findingTable),
-        );
+        return const Scaffold(body: FindingTableLoader());
       },
     );
   }

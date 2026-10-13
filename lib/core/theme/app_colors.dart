@@ -22,8 +22,8 @@ abstract final class AppColors {
   static const Color error = Color(0xFFE04848);
   static const Color errorSoft = Color(0xFFFDE9E9);
 
-  static const Color shimmerBase = Color(0xFFE6EBF4);
-  static const Color shimmerHighlight = Color(0xFFF7F9FD);
+  static const Color shimmerBase = Color(0xFFE8E2D8);
+  static const Color shimmerHighlight = Color(0xFFF8F4EC);
 
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft,

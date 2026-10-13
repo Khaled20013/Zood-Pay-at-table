@@ -5,6 +5,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/language_toggle.dart';
 import '../../domain/entities/table_session.dart';
+import 'scan_table_button.dart';
 
 /// Branch + table hero shown on top of the menu.
 class TableHeader extends StatelessWidget {
@@ -38,7 +39,7 @@ class TableHeader extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(18, 16, 16, 18),
+              padding: const EdgeInsetsDirectional.fromSTEB(18, 14, 14, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -46,57 +47,46 @@ class TableHeader extends StatelessWidget {
                     children: [
                       Image.asset(
                         'assets/images/zood_mark.png',
-                        width: 38,
-                        height: 38,
+                        width: 36,
+                        height: 36,
                       ),
                       const SizedBox(width: 10),
                       const _OpenPill(),
                       const Spacer(),
                       const LanguageToggle(onDark: true),
+                      const SizedBox(width: 8),
+                      ScanTableButton(onDark: true, size: 40),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l10n.welcomeTo,
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.8),
-                              ),
-                            ),
-                            Text(
-                              session.branchName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: textTheme.headlineMedium?.copyWith(
-                                color: Colors.white,
-                                fontSize: 28,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      TableBadge(tableName: session.tableName),
-                    ],
+                  const SizedBox(height: 18),
+                  Text(
+                    l10n.welcomeTo,
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.78),
+                    ),
                   ),
-                  const SizedBox(height: 10),
+                  Text(
+                    session.branchName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.headlineMedium?.copyWith(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
                       _GlassChip(
-                        icon: Icons.restaurant_rounded,
-                        label: l10n.dineIn,
+                        icon: Icons.table_restaurant_rounded,
+                        label: l10n.tableNumber(session.tableName),
                       ),
                       _GlassChip(
-                        icon: Icons.receipt_long_rounded,
-                        label: l10n.vatAddedAtCheckout,
+                        icon: Icons.restaurant_rounded,
+                        label: l10n.dineIn,
                       ),
                     ],
                   ),
@@ -156,6 +146,7 @@ class _GlassChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: const BoxConstraints(maxWidth: 180),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.14),
@@ -167,11 +158,15 @@ class _GlassChip extends StatelessWidget {
         children: [
           Icon(icon, size: 14, color: Colors.white),
           const SizedBox(width: 5),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -212,7 +207,6 @@ class TableBadge extends StatelessWidget {
       constraints: const BoxConstraints(maxWidth: 140),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             context.l10n.tableLabel,

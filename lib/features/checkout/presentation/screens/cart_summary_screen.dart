@@ -60,6 +60,12 @@ class _CheckoutViewState extends State<_CheckoutView> {
   TableSession get _session => widget.session;
 
   @override
+  void initState() {
+    super.initState();
+    _card.fillDebugTestCard();
+  }
+
+  @override
   void dispose() {
     _card.dispose();
     _notes.dispose();

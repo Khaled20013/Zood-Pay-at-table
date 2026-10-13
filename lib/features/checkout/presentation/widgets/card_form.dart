@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -17,6 +18,16 @@ class CardFormControllers {
 
   /// The preview flips to the card's back while this has focus.
   final cvcFocus = FocusNode();
+
+  /// Debug-only Visa test card so Pay Now can be tapped without retyping.
+  /// Safe cards: `4111…` succeeds in dummy mode; never runs in release.
+  void fillDebugTestCard() {
+    if (!kDebugMode) return;
+    holderName.text = 'TEST USER';
+    number.text = '4111 1111 1111 1111';
+    expiry.text = '12/30';
+    cvc.text = '123';
+  }
 
   CardDetails toCard() => CardDetails.fromInput(
     holderName: holderName.text,

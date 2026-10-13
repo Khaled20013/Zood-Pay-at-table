@@ -13,7 +13,6 @@ import '../../../../core/widgets/app_snack_bar.dart';
 import '../../../../core/widgets/auto_dir_text.dart';
 import '../../../../core/widgets/fly_to_cart.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/loading_indicator.dart';
 import '../../../../core/widgets/status_view.dart';
 import '../../domain/entities/modifier_selection.dart';
 import '../../domain/entities/product.dart';
@@ -22,10 +21,10 @@ import '../../../cart/presentation/cubit/cart_cubit.dart';
 import '../cubit/menu_cubit.dart';
 import '../../../cart/presentation/widgets/cart_bottom_sheet.dart';
 import '../widgets/category_bar.dart';
+import '../widgets/menu_loading_skeleton.dart';
 import '../widgets/menu_visuals.dart';
 import '../widgets/product_artwork.dart';
 import '../widgets/product_card.dart';
-import '../../../table_session/presentation/widgets/scan_table_button.dart';
 import '../../../table_session/presentation/widgets/table_header.dart';
 import '../../../table_session/presentation/widgets/table_session_gate.dart';
 import 'product_details_dialog.dart';
@@ -321,7 +320,6 @@ class _MenuViewState extends State<_MenuView> {
                           pinned: true,
                           delegate: _CategoryHeaderDelegate(
                             gutter: gutter - 16,
-                            tableName: _session.tableName,
                             child: ValueListenableBuilder<String?>(
                               valueListenable: _activeSection,
                               builder: (context, active, _) => CategoryBar(
@@ -371,29 +369,7 @@ class _MenuViewState extends State<_MenuView> {
         return [
           SliverPadding(
             padding: EdgeInsets.fromLTRB(gutter, 8, gutter, 0),
-            sliver: SliverToBoxAdapter(
-              child: ShimmerScope(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        SkeletonBox(width: 70, height: 38, radius: 40),
-                        SizedBox(width: 8),
-                        SkeletonBox(width: 140, height: 38, radius: 40),
-                        SizedBox(width: 8),
-                        SkeletonBox(width: 120, height: 38, radius: 40),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    for (var i = 0; i < 4; i++) ...[
-                      const ProductCardSkeleton(),
-                      const SizedBox(height: 12),
-                    ],
-                  ],
-                ),
-              ),
-            ),
+            sliver: const SliverToBoxAdapter(child: MenuLoadingSkeleton()),
           ),
         ];
       case MenuStatus.failure:
@@ -641,28 +617,11 @@ class _SearchField extends StatelessWidget {
   }
 }
 
-/// Clips chips scrolled under the scan button but keeps their shadows.
-class _SidesClipper extends CustomClipper<Rect> {
-  const _SidesClipper();
-
-  @override
-  Rect getClip(Size size) =>
-      Rect.fromLTRB(0, -24, size.width, size.height + 24);
-
-  @override
-  bool shouldReclip(_SidesClipper old) => false;
-}
-
 class _CategoryHeaderDelegate extends SliverPersistentHeaderDelegate {
-  _CategoryHeaderDelegate({
-    required this.child,
-    required this.gutter,
-    required this.tableName,
-  });
+  _CategoryHeaderDelegate({required this.child, required this.gutter});
 
   final Widget child;
   final double gutter;
-  final String tableName;
 
   @override
   double get minExtent => CategoryBar.height;
@@ -676,24 +635,14 @@ class _CategoryHeaderDelegate extends SliverPersistentHeaderDelegate {
       color: AppColors.background,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: gutter),
-        child: Row(
-          children: [
-            Padding(
-              padding: const EdgeInsetsDirectional.only(start: 16),
-              child: TableSwitchPill(tableName: tableName),
-            ),
-            Expanded(
-              child: ClipRect(clipper: const _SidesClipper(), child: child),
-            ),
-          ],
-        ),
+        child: child,
       ),
     );
   }
 
   @override
   bool shouldRebuild(covariant _CategoryHeaderDelegate old) =>
-      old.child != child || old.gutter != gutter || old.tableName != tableName;
+      old.child != child || old.gutter != gutter;
 }
 
 class _SideCartPanel extends StatelessWidget {

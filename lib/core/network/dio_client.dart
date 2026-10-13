@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 import '../config/app_config.dart';
 import 'api_endpoints.dart';
+import 'api_logger_interceptor.dart';
 
 /// Builds the [Dio] instance shared by the public Pay at Table services.
 /// It carries no auth token and no 401 handling: every endpoint is public.
@@ -26,11 +26,7 @@ class DioClient {
       ),
     );
     if (kDebugMode && AppConfig.enableNetworkLogs) {
-      dio.interceptors.add(
-        // Request bodies stay out of the logs: the order request carries
-        // card details.
-        PrettyDioLogger(requestHeader: true, compact: true),
-      );
+      dio.interceptors.add(ApiLoggerInterceptor());
     }
   }
 

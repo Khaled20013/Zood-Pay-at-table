@@ -44,6 +44,7 @@ class ShimmerScope extends StatelessWidget {
     return Shimmer.fromColors(
       baseColor: AppColors.shimmerBase,
       highlightColor: AppColors.shimmerHighlight,
+      period: const Duration(milliseconds: 1300),
       child: child,
     );
   }
