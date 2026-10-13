@@ -10,7 +10,6 @@ import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/language_toggle.dart';
 import '../widgets/landing_illustration.dart';
 import '../../../../core/widgets/reveal.dart';
-import '../../../../core/config/app_config.dart';
 
 /// Shown after the splash when the app is opened directly rather than from a
 /// table QR link: explains the scan → order → pay flow and leads to the
@@ -510,24 +509,10 @@ class _CtaBar extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 560),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 14, 20, 12),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CustomButton(
-                      label: l10n.landingStart,
-                      icon: Icons.qr_code_scanner_rounded,
-                      onPressed: () => context.push(AppRoutes.welcome),
-                    ),
-                    const SizedBox(height: 6),
-                    CustomButton(
-                      label: l10n.welcomeDemoTable,
-                      icon: Icons.table_restaurant_rounded,
-                      variant: CustomButtonVariant.ghost,
-                      height: 44,
-                      onPressed: () =>
-                          context.go(AppRoutes.table(AppConfig.demoQrId)),
-                    ),
-                  ],
+                child: CustomButton(
+                  label: l10n.landingStart,
+                  icon: Icons.qr_code_scanner_rounded,
+                  onPressed: () => context.push(AppRoutes.welcome),
                 ),
               ),
             ),

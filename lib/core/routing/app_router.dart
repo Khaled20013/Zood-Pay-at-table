@@ -8,6 +8,7 @@ import '../../features/checkout/presentation/screens/cart_summary_screen.dart';
 import '../../features/menu/presentation/screens/menu_screen.dart';
 import 'not_found_screen.dart';
 import '../../features/checkout/presentation/screens/order_success_screen.dart';
+import '../../features/table_session/presentation/screens/qr_scan_screen.dart';
 import '../../features/table_session/presentation/screens/table_scan_screen.dart';
 import '../../features/onboarding/presentation/screens/welcome_screen.dart';
 
@@ -15,6 +16,7 @@ abstract final class AppRoutes {
   static const String splash = '/splash';
   static const String landing = '/';
   static const String welcome = '/start';
+  static const String scan = '/scan';
 
   /// The printed QR is `https://control.zood.ai/pay-at-table/<qr_id>/menu`.
   static const String tablePattern = '/pay-at-table/:qrId';
@@ -55,6 +57,10 @@ abstract final class AppRouter {
         GoRoute(
           path: AppRoutes.welcome,
           builder: (context, state) => const WelcomeScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.scan,
+          builder: (context, state) => const QrScanScreen(),
         ),
         GoRoute(
           path: AppRoutes.tablePattern,

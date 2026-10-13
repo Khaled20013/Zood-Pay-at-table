@@ -57,9 +57,6 @@ class AppLocalizationsAr extends AppLocalizations {
       'يبدو أن هذا ليس رابط طاولة أو رمزًا صحيحًا.';
 
   @override
-  String get welcomeDemoTable => 'افتح الطاولة التجريبية';
-
-  @override
   String get notFoundTitle => 'انتهت صلاحية هذا الرابط';
 
   @override
@@ -153,9 +150,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String itemAdded(String name) {
     return 'تمت إضافة $name';
   }
-
-  @override
-  String get customize => 'تخصيص';
 
   @override
   String get menuLoadFailedTitle => 'تعذّر تحميل القائمة';
@@ -519,4 +513,67 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get cardCvcBackHint =>
       'رمز التحقق هو آخر 3 أو 4 أرقام على ظهر البطاقة';
+
+  @override
+  String get serviceUnavailableTitle => 'الطلب من الطاولة غير متاح بعد';
+
+  @override
+  String get errorServiceUnavailable =>
+      'ما زلنا نجهّز هذه الخدمة. حاول مرة أخرى لاحقًا أو اطلب المساعدة من أحد الموظفين.';
+
+  @override
+  String get networkErrorTitle => 'لا يوجد اتصال';
+
+  @override
+  String get shareReceipt => 'مشاركة الإيصال';
+
+  @override
+  String get copyReceipt => 'نسخ الإيصال';
+
+  @override
+  String get receiptCopied => 'تم نسخ الإيصال';
+
+  @override
+  String receiptShareText(
+    String branch,
+    String table,
+    String number,
+    String total,
+  ) {
+    return '$branch · طاولة $table\nالطلب #$number\nالإجمالي: $total';
+  }
+
+  @override
+  String get scanQrCode => 'امسح رمز QR';
+
+  @override
+  String get scanAnotherTable => 'امسح طاولة أخرى';
+
+  @override
+  String get scanAgain => 'امسح مرة أخرى';
+
+  @override
+  String get scanHint => 'وجّه الكاميرا نحو رمز QR الموجود على طاولتك';
+
+  @override
+  String get scanInvalidCode => 'هذا ليس رمز طاولة من زود. جرّب رمزًا آخر.';
+
+  @override
+  String get scanCameraDeniedTitle => 'الوصول إلى الكاميرا مغلق';
+
+  @override
+  String get scanCameraDeniedMessage =>
+      'اسمح بالوصول إلى الكاميرا من الإعدادات، أو أدخل رابط الطاولة بدلًا من ذلك.';
+
+  @override
+  String get scanCameraUnavailableTitle => 'تعذّر استخدام الكاميرا';
+
+  @override
+  String get scanCameraUnavailableMessage => 'أدخل رابط الطاولة بدلًا من ذلك.';
+
+  @override
+  String get scanEnterLink => 'أدخل الرابط بدلًا من ذلك';
+
+  @override
+  String get scanTorch => 'الفلاش';
 }

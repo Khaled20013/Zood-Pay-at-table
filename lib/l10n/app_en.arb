@@ -20,7 +20,6 @@
   "welcomeLinkHint": "Paste table link or code",
   "welcomeOpenTable": "Open table",
   "welcomeInvalidLink": "That doesn't look like a table link or code.",
-  "welcomeDemoTable": "Open demo table",
 
   "notFoundTitle": "This link has expired",
   "notFoundMessage": "The page you opened is no longer available. Scan the QR code on your table to start again.",
@@ -53,7 +52,6 @@
   "clearSearch": "Clear search",
   "itemAdded": "{name} added",
   "@itemAdded": { "placeholders": { "name": { "type": "String" } } },
-  "customize": "Customize",
   "menuLoadFailedTitle": "Menu didn't load",
   "menuEmptyTitle": "The menu is being updated",
   "menuEmptyMessage": "No items are available to order right now. Please ask a staff member.",
@@ -184,5 +182,27 @@
   "cardEndingIn": "Card •••• {last4}",
   "@cardEndingIn": {"placeholders": {"last4": {"type": "String"}}},
   "reference": "Reference",
-  "cardCvcBackHint": "The security code is the 3–4 digits on the back of your card"
+  "cardCvcBackHint": "The security code is the 3–4 digits on the back of your card",
+
+  "serviceUnavailableTitle": "Table ordering isn't available yet",
+  "errorServiceUnavailable": "This service is still being set up. Please try again later or ask a staff member.",
+  "networkErrorTitle": "No connection",
+
+  "shareReceipt": "Share receipt",
+  "copyReceipt": "Copy receipt",
+  "receiptCopied": "Receipt copied",
+  "receiptShareText": "{branch} · Table {table}\nOrder #{number}\nTotal: {total}",
+  "@receiptShareText": {"placeholders": {"branch": {"type": "String"}, "table": {"type": "String"}, "number": {"type": "String"}, "total": {"type": "String"}}},
+
+  "scanQrCode": "Scan QR code",
+  "scanAnotherTable": "Scan another table",
+  "scanAgain": "Scan again",
+  "scanHint": "Point the camera at the QR code on your table",
+  "scanInvalidCode": "This isn't a Zood table code. Try another one.",
+  "scanCameraDeniedTitle": "Camera access is off",
+  "scanCameraDeniedMessage": "Allow camera access in your settings, or enter the table link instead.",
+  "scanCameraUnavailableTitle": "The camera can't be used",
+  "scanCameraUnavailableMessage": "Enter the table link instead.",
+  "scanEnterLink": "Enter the link instead",
+  "scanTorch": "Flash"
 }

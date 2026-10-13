@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/error/app_exception.dart';
 import '../../../../core/localization/l10n.dart';
+import '../../../../core/routing/app_router.dart';
 import '../../../../core/widgets/loading_indicator.dart';
 import '../../../../core/widgets/status_view.dart';
 import '../../domain/entities/table_session.dart';
@@ -73,14 +75,19 @@ class TableErrorView extends StatelessWidget {
     final l10n = context.l10n;
     final canRetry = error?.canRetry ?? true;
     return StatusView(
-      isError: true,
-      icon: canRetry ? Icons.wifi_off_rounded : Icons.qr_code_2_rounded,
+      isError: error is! ServiceUnavailableException,
+      icon: switch (error) {
+        ServiceUnavailableException() => Icons.construction_rounded,
+        NetworkException() => Icons.wifi_off_rounded,
+        _ when !canRetry => Icons.qr_code_2_rounded,
+        _ => Icons.error_outline_rounded,
+      },
       title: l10n.tableErrorTitle(error),
       message: l10n.tableErrorMessage(error),
-      actionLabel: canRetry ? l10n.tryAgain : null,
+      actionLabel: canRetry ? l10n.tryAgain : l10n.scanAgain,
       onAction: canRetry
           ? () => context.read<TableSessionCubit>().retry()
-          : null,
+          : () => context.go(AppRoutes.scan),
     );
   }
 }

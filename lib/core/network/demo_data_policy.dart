@@ -41,6 +41,12 @@ class DemoDataPolicy {
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       if (status != null) {
+        if (isMissingRoute(status, e.response?.data)) {
+          debugPrint(
+            'DemoDataPolicy: ${e.requestOptions.path} is not deployed.',
+          );
+          throw const ServiceUnavailableException();
+        }
         final message = serverMessageOf(e.response?.data);
         throw onStatus?.call(status, message) ?? ServerException(message);
       }
@@ -57,6 +63,17 @@ class DemoDataPolicy {
       debugPrint('DemoDataPolicy: unexpected error $e');
       throw const UnexpectedException();
     }
+  }
+
+  /// Laravel's unknown-route `404` (`"The route ... could not be found."`),
+  /// which lacks the contract's `success` field.
+  static bool isMissingRoute(int status, Object? body) {
+    if (status != 404 || body is! Map || body.containsKey('success')) {
+      return false;
+    }
+    final message = serverMessageOf(body) ?? '';
+    return message.startsWith('The route ') &&
+        message.endsWith('could not be found.');
   }
 
   /// The `message` of `{ "success": false, "message": "...", "errors": {...} }`.

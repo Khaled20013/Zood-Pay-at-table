@@ -1,10 +1,8 @@
-import 'package:flutter/foundation.dart';
-
 /// Compile-time configuration, overridable with `--dart-define`.
 ///
 /// ```sh
-/// flutter run --dart-define=USE_DUMMY_DATA=false \
-///   --dart-define=API_BASE_URL=https://dev.api.zood.ai/api/v1/
+/// flutter run --dart-define=USE_DUMMY_DATA=true
+/// flutter run --dart-define=API_BASE_URL=https://api.zood.ai/api/v1/
 /// ```
 abstract final class AppConfig {
   static const String appName = 'Zood Pay-At-Table';
@@ -12,18 +10,15 @@ abstract final class AppConfig {
   static const String productionApiBaseUrl = 'https://api.zood.ai/api/v1/';
   static const String devApiBaseUrl = 'https://dev.api.zood.ai/api/v1/';
 
+  /// Dev even in release: the Pay at Table routes are not on production yet.
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: kReleaseMode ? productionApiBaseUrl : devApiBaseUrl,
+    defaultValue: devApiBaseUrl,
   );
 
   /// When true the repositories never touch the network and serve the
-  /// bundled demo data (same JSON shape as the API). Defaults to true until
-  /// the Pay at Table endpoints are live.
-  static const bool useDummyData = bool.fromEnvironment(
-    'USE_DUMMY_DATA',
-    defaultValue: true,
-  );
+  /// bundled demo data (same JSON shape as the API).
+  static const bool useDummyData = bool.fromEnvironment('USE_DUMMY_DATA');
 
   /// Host whose `/pay-at-table/...` links open the app (App Links /
   /// Universal Links). Printed on the table QR codes.
@@ -38,8 +33,8 @@ abstract final class AppConfig {
   /// Prices come without VAT; the server adds it when charging.
   static const double vatRate = 0.15;
 
-  /// QR opened by "Open demo table".
-  static const String demoQrId = '40de86d3987ef0a98768ad61';
+  /// Real dev-API table used by widget tests that open a menu route.
+  static const String demoQrId = '7c034c7a804289d74b790856';
 
   static const bool enableNetworkLogs = bool.fromEnvironment(
     'ENABLE_NETWORK_LOGS',

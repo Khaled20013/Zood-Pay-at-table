@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/localization/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../../../../core/widgets/auto_dir_text.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../domain/entities/modifier_selection.dart';
 import '../../domain/entities/product.dart';
@@ -179,7 +180,7 @@ class _ProductDetailsDialogState extends State<ProductDetailsDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      AutoDirText(
                         _product.name,
                         style: textTheme.headlineMedium?.copyWith(
                           fontSize: 24,
@@ -187,7 +188,10 @@ class _ProductDetailsDialogState extends State<ProductDetailsDialog> {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      Text(_product.description, style: textTheme.bodyMedium),
+                      AutoDirText(
+                        _product.description,
+                        style: textTheme.bodyMedium,
+                      ),
                       const SizedBox(height: 10),
                       Row(
                         children: [

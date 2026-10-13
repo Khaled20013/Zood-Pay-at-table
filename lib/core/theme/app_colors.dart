@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppColors {
-  static const Color primary = Color(0xFF1F4EE5);
-  static const Color primaryDark = Color(0xFF1535A8);
-  static const Color primaryBright = Color(0xFF4A7BFF);
-  static const Color primarySoft = Color(0xFFE4EBFD);
-  static const Color accent = Color(0xFFFFA62B);
-  static const Color accentDeep = Color(0xFFF2711C);
-  static const Color accentSoft = Color(0xFFFFF0DB);
+  static const Color primary = Color(0xFF1B3FDB);
+  static const Color primaryDark = Color(0xFF102A8A);
+  static const Color primaryBright = Color(0xFF4C74F0);
+  static const Color primarySoft = Color(0xFFE7EDFB);
+  static const Color accent = Color(0xFFE8892C);
+  static const Color accentDeep = Color(0xFFC45C12);
+  static const Color accentSoft = Color(0xFFF8E7D4);
 
-  static const Color background = Color(0xFFF6F8FC);
-  static const Color surface = Colors.white;
-  static const Color surfaceMuted = Color(0xFFEEF1F7);
-  static const Color border = Color(0xFFE2E7F0);
+  static const Color background = Color(0xFFF4F1EB);
+  static const Color surface = Color(0xFFFFFCF8);
+  static const Color surfaceMuted = Color(0xFFEFEBE4);
+  static const Color border = Color(0xFFE4DDD2);
 
-  static const Color ink = Color(0xFF111A33);
-  static const Color inkMuted = Color(0xFF5A6480);
-  static const Color inkSubtle = Color(0xFF8D96AD);
+  static const Color ink = Color(0xFF1A1714);
+  static const Color inkMuted = Color(0xFF6B6258);
+  static const Color inkSubtle = Color(0xFF9A9086);
 
   static const Color success = Color(0xFF1BA160);
   static const Color error = Color(0xFFE04848);
@@ -28,7 +28,7 @@ abstract final class AppColors {
   static const LinearGradient heroGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF0B1E66), Color(0xFF1A3FC4), Color(0xFF3D6DFF)],
+    colors: [Color(0xFF0C1733), Color(0xFF16306E), Color(0xFF2450C8)],
   );
 
   /// Primary call-to-action fill (buttons, selected chips, cart bar).

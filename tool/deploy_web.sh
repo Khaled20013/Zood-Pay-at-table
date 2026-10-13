@@ -4,14 +4,20 @@
 #
 # Usage: tool/deploy_web.sh ["commit message"]
 # Override the deploy checkout with DEPLOY_DIR=/path/to/repo.
+# Uses the AppConfig defaults (dev API); set API_BASE_URL for production,
+# or USE_DUMMY_DATA=true for the offline demo.
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-DEPLOY_DIR="${DEPLOY_DIR:-$PROJECT_DIR/../zood_pay_at_table_web}"
+DEPLOY_DIR="${DEPLOY_DIR:-$PROJECT_DIR/../Zood-Pay-at-table-web}"
 MESSAGE="${1:-Deploy web build $(date '+%Y-%m-%d %H:%M')}"
 
+DEFINES=()
+[ -n "${API_BASE_URL:-}" ] && DEFINES+=(--dart-define=API_BASE_URL="$API_BASE_URL")
+[ -n "${USE_DUMMY_DATA:-}" ] && DEFINES+=(--dart-define=USE_DUMMY_DATA="$USE_DUMMY_DATA")
+
 cd "$PROJECT_DIR"
-flutter build web --release
+flutter build web --release ${DEFINES[@]+"${DEFINES[@]}"}
 
 mkdir -p "$DEPLOY_DIR"
 if [ ! -d "$DEPLOY_DIR/.git" ]; then

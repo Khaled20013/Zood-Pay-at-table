@@ -57,9 +57,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'That doesn\'t look like a table link or code.';
 
   @override
-  String get welcomeDemoTable => 'Open demo table';
-
-  @override
   String get notFoundTitle => 'This link has expired';
 
   @override
@@ -151,9 +148,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String itemAdded(String name) {
     return '$name added';
   }
-
-  @override
-  String get customize => 'Customize';
 
   @override
   String get menuLoadFailedTitle => 'Menu didn\'t load';
@@ -520,4 +514,68 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cardCvcBackHint =>
       'The security code is the 3–4 digits on the back of your card';
+
+  @override
+  String get serviceUnavailableTitle => 'Table ordering isn\'t available yet';
+
+  @override
+  String get errorServiceUnavailable =>
+      'This service is still being set up. Please try again later or ask a staff member.';
+
+  @override
+  String get networkErrorTitle => 'No connection';
+
+  @override
+  String get shareReceipt => 'Share receipt';
+
+  @override
+  String get copyReceipt => 'Copy receipt';
+
+  @override
+  String get receiptCopied => 'Receipt copied';
+
+  @override
+  String receiptShareText(
+    String branch,
+    String table,
+    String number,
+    String total,
+  ) {
+    return '$branch · Table $table\nOrder #$number\nTotal: $total';
+  }
+
+  @override
+  String get scanQrCode => 'Scan QR code';
+
+  @override
+  String get scanAnotherTable => 'Scan another table';
+
+  @override
+  String get scanAgain => 'Scan again';
+
+  @override
+  String get scanHint => 'Point the camera at the QR code on your table';
+
+  @override
+  String get scanInvalidCode =>
+      'This isn\'t a Zood table code. Try another one.';
+
+  @override
+  String get scanCameraDeniedTitle => 'Camera access is off';
+
+  @override
+  String get scanCameraDeniedMessage =>
+      'Allow camera access in your settings, or enter the table link instead.';
+
+  @override
+  String get scanCameraUnavailableTitle => 'The camera can\'t be used';
+
+  @override
+  String get scanCameraUnavailableMessage => 'Enter the table link instead.';
+
+  @override
+  String get scanEnterLink => 'Enter the link instead';
+
+  @override
+  String get scanTorch => 'Flash';
 }

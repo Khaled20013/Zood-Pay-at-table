@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/localization/l10n.dart';
+import '../../../../core/widgets/auto_dir_text.dart';
 import '../../../../core/widgets/loading_indicator.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -18,12 +19,16 @@ class ProductCard extends StatelessWidget {
     required this.quantityInCart,
     required this.onTap,
     required this.onQuickAdd,
+    this.highlight = '',
   });
 
   final Product product;
   final String currency;
   final int quantityInCart;
   final VoidCallback onTap;
+
+  /// Current search query, marked in the name and description.
+  final String highlight;
 
   /// Gets the add button's global rect, where a fly-to-cart can start.
   final ValueChanged<Rect> onQuickAdd;
@@ -80,8 +85,9 @@ class ProductCard extends StatelessWidget {
                                 padding: EdgeInsets.only(bottom: 6),
                                 child: _PopularTag(),
                               ),
-                            Text(
+                            AutoDirText(
                               product.name,
+                              highlight: highlight,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: textTheme.titleMedium?.copyWith(
@@ -90,8 +96,9 @@ class ProductCard extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
+                            AutoDirText(
                               product.description,
+                              highlight: highlight,
                               maxLines: product.isPopular ? 2 : 3,
                               overflow: TextOverflow.ellipsis,
                               style: textTheme.bodySmall?.copyWith(

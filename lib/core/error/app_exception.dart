@@ -33,6 +33,12 @@ class TableUnavailableException extends AppException {
   bool get canRetry => false;
 }
 
+/// The API answered but has no such route yet (`404` without the contract's
+/// error body), so it is not the QR that is missing.
+class ServiceUnavailableException extends AppException {
+  const ServiceUnavailableException([super.serverMessage]);
+}
+
 /// No connection or timeout.
 class NetworkException extends AppException {
   const NetworkException([super.serverMessage]);

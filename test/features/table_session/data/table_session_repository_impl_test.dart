@@ -89,6 +89,27 @@ void main() {
       await expectLater(call, throwsA(isA<QrNotFoundException>()));
     });
 
+    test('404 for an undeployed route → service unavailable, not QR', () async {
+      final adapter = FakeHttpAdapter(
+        (o) => jsonResponse(404, {
+          'message': 'The route ${o.path} could not be found.',
+          'exception':
+              r'Symfony\Component\HttpKernel\Exception'
+              r'\NotFoundHttpException',
+        }),
+      );
+      await expectLater(
+        apiRepo(adapter).resolveTable(demoQrId),
+        throwsA(
+          isA<ServiceUnavailableException>().having(
+            (e) => e.canRetry,
+            'canRetry',
+            isTrue,
+          ),
+        ),
+      );
+    });
+
     test('410 or is_active false → ordering unavailable', () async {
       await expectLater(
         apiRepo(

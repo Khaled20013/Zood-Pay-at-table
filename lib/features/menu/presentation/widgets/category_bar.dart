@@ -59,7 +59,17 @@ class _CategoryBarState extends State<CategoryBar> {
     final chip = _chipKeys[widget.selected]?.currentContext?.findRenderObject();
     if (chip == null || !chip.attached) return;
     final position = _scroll.position;
-    final target = RenderAbstractViewport.of(chip)
+    final viewport = RenderAbstractViewport.of(chip);
+    // Leave a chip that is already in view alone, so the bar doesn't sway
+    // on every section change while the menu scrolls.
+    final a = viewport.getOffsetToReveal(chip, 0).offset;
+    final b = viewport.getOffsetToReveal(chip, 1).offset;
+    const margin = 16.0;
+    if (position.pixels >= (a < b ? a : b) - margin &&
+        position.pixels <= (a < b ? b : a) + margin) {
+      return;
+    }
+    final target = viewport
         .getOffsetToReveal(chip, 0.5)
         .offset
         .clamp(position.minScrollExtent, position.maxScrollExtent);

@@ -80,6 +80,9 @@ class ProductArtwork extends StatelessWidget {
               Image.network(
                 product.imageUrl!,
                 fit: BoxFit.cover,
+                // Some storage hosts send no CORS headers; let web fall back
+                // to an <img> element instead of showing nothing.
+                webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
                 frameBuilder: (context, child, frame, wasSyncLoaded) =>
                     wasSyncLoaded
                     ? child

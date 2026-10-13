@@ -128,7 +128,7 @@ class CardForm extends StatelessWidget {
           _field(
             controller: controllers.holderName,
             label: l10n.cardHolderName,
-            hint: 'AHMED ALI',
+            hint: 'KHALED HUSSIEN',
             icon: Icons.person_outline_rounded,
             keyboardType: TextInputType.name,
             textCapitalization: TextCapitalization.characters,

@@ -19,7 +19,6 @@
   "welcomeLinkHint": "الصق رابط الطاولة أو رمزها",
   "welcomeOpenTable": "افتح الطاولة",
   "welcomeInvalidLink": "يبدو أن هذا ليس رابط طاولة أو رمزًا صحيحًا.",
-  "welcomeDemoTable": "افتح الطاولة التجريبية",
 
   "notFoundTitle": "انتهت صلاحية هذا الرابط",
   "notFoundMessage": "الصفحة التي فتحتها لم تعد متاحة. امسح رمز QR الموجود على طاولتك للبدء من جديد.",
@@ -49,7 +48,6 @@
   "searchHint": "ابحث عن المشروبات والحلويات…",
   "clearSearch": "مسح البحث",
   "itemAdded": "تمت إضافة {name}",
-  "customize": "تخصيص",
   "menuLoadFailedTitle": "تعذّر تحميل القائمة",
   "menuEmptyTitle": "جارٍ تحديث القائمة",
   "menuEmptyMessage": "لا توجد أصناف متاحة للطلب حاليًا. يُرجى التواصل مع أحد الموظفين.",
@@ -163,5 +161,26 @@
   "payNow": "ادفع الآن",
   "cardEndingIn": "بطاقة •••• {last4}",
   "reference": "المرجع",
-  "cardCvcBackHint": "رمز التحقق هو آخر 3 أو 4 أرقام على ظهر البطاقة"
+  "cardCvcBackHint": "رمز التحقق هو آخر 3 أو 4 أرقام على ظهر البطاقة",
+
+  "serviceUnavailableTitle": "الطلب من الطاولة غير متاح بعد",
+  "errorServiceUnavailable": "ما زلنا نجهّز هذه الخدمة. حاول مرة أخرى لاحقًا أو اطلب المساعدة من أحد الموظفين.",
+  "networkErrorTitle": "لا يوجد اتصال",
+
+  "shareReceipt": "مشاركة الإيصال",
+  "copyReceipt": "نسخ الإيصال",
+  "receiptCopied": "تم نسخ الإيصال",
+  "receiptShareText": "{branch} · طاولة {table}\nالطلب #{number}\nالإجمالي: {total}",
+
+  "scanQrCode": "امسح رمز QR",
+  "scanAnotherTable": "امسح طاولة أخرى",
+  "scanAgain": "امسح مرة أخرى",
+  "scanHint": "وجّه الكاميرا نحو رمز QR الموجود على طاولتك",
+  "scanInvalidCode": "هذا ليس رمز طاولة من زود. جرّب رمزًا آخر.",
+  "scanCameraDeniedTitle": "الوصول إلى الكاميرا مغلق",
+  "scanCameraDeniedMessage": "اسمح بالوصول إلى الكاميرا من الإعدادات، أو أدخل رابط الطاولة بدلًا من ذلك.",
+  "scanCameraUnavailableTitle": "تعذّر استخدام الكاميرا",
+  "scanCameraUnavailableMessage": "أدخل رابط الطاولة بدلًا من ذلك.",
+  "scanEnterLink": "أدخل الرابط بدلًا من ذلك",
+  "scanTorch": "الفلاش"
 }

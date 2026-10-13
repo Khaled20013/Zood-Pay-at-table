@@ -188,12 +188,6 @@ abstract class AppLocalizations {
   /// **'That doesn\'t look like a table link or code.'**
   String get welcomeInvalidLink;
 
-  /// No description provided for @welcomeDemoTable.
-  ///
-  /// In en, this message translates to:
-  /// **'Open demo table'**
-  String get welcomeDemoTable;
-
   /// No description provided for @notFoundTitle.
   ///
   /// In en, this message translates to:
@@ -349,12 +343,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{name} added'**
   String itemAdded(String name);
-
-  /// No description provided for @customize.
-  ///
-  /// In en, this message translates to:
-  /// **'Customize'**
-  String get customize;
 
   /// No description provided for @menuLoadFailedTitle.
   ///
@@ -985,6 +973,119 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The security code is the 3–4 digits on the back of your card'**
   String get cardCvcBackHint;
+
+  /// No description provided for @serviceUnavailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Table ordering isn\'t available yet'**
+  String get serviceUnavailableTitle;
+
+  /// No description provided for @errorServiceUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This service is still being set up. Please try again later or ask a staff member.'**
+  String get errorServiceUnavailable;
+
+  /// No description provided for @networkErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection'**
+  String get networkErrorTitle;
+
+  /// No description provided for @shareReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Share receipt'**
+  String get shareReceipt;
+
+  /// No description provided for @copyReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy receipt'**
+  String get copyReceipt;
+
+  /// No description provided for @receiptCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt copied'**
+  String get receiptCopied;
+
+  /// No description provided for @receiptShareText.
+  ///
+  /// In en, this message translates to:
+  /// **'{branch} · Table {table}\nOrder #{number}\nTotal: {total}'**
+  String receiptShareText(
+    String branch,
+    String table,
+    String number,
+    String total,
+  );
+
+  /// No description provided for @scanQrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR code'**
+  String get scanQrCode;
+
+  /// No description provided for @scanAnotherTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan another table'**
+  String get scanAnotherTable;
+
+  /// No description provided for @scanAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan again'**
+  String get scanAgain;
+
+  /// No description provided for @scanHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Point the camera at the QR code on your table'**
+  String get scanHint;
+
+  /// No description provided for @scanInvalidCode.
+  ///
+  /// In en, this message translates to:
+  /// **'This isn\'t a Zood table code. Try another one.'**
+  String get scanInvalidCode;
+
+  /// No description provided for @scanCameraDeniedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera access is off'**
+  String get scanCameraDeniedTitle;
+
+  /// No description provided for @scanCameraDeniedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow camera access in your settings, or enter the table link instead.'**
+  String get scanCameraDeniedMessage;
+
+  /// No description provided for @scanCameraUnavailableTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The camera can\'t be used'**
+  String get scanCameraUnavailableTitle;
+
+  /// No description provided for @scanCameraUnavailableMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the table link instead.'**
+  String get scanCameraUnavailableMessage;
+
+  /// No description provided for @scanEnterLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the link instead'**
+  String get scanEnterLink;
+
+  /// No description provided for @scanTorch.
+  ///
+  /// In en, this message translates to:
+  /// **'Flash'**
+  String get scanTorch;
 }
 
 class _AppLocalizationsDelegate

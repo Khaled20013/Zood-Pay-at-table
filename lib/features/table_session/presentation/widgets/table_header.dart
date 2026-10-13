@@ -53,26 +53,37 @@ class TableHeader extends StatelessWidget {
                       const _OpenPill(),
                       const Spacer(),
                       const LanguageToggle(onDark: true),
-                      const SizedBox(width: 8),
-                      TableBadge(tableName: session.tableName),
                     ],
                   ),
-                  const SizedBox(height: 26),
-                  Text(
-                    l10n.welcomeTo,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.8),
-                    ),
-                  ),
-                  Text(
-                    session.branchName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: textTheme.headlineMedium?.copyWith(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.welcomeTo,
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.8),
+                              ),
+                            ),
+                            Text(
+                              session.branchName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: textTheme.headlineMedium?.copyWith(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      TableBadge(tableName: session.tableName),
+                    ],
                   ),
                   const SizedBox(height: 10),
                   Wrap(
@@ -175,10 +186,14 @@ class TableBadge extends StatelessWidget {
   final String tableName;
   final bool dark;
 
+  /// Short codes like "T5" read big; longer names shrink and may wrap.
+  static bool isLongName(String name) => name.characters.length > 6;
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final fg = dark ? AppColors.primary : AppColors.primaryDark;
+    final long = isLongName(tableName);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -194,12 +209,15 @@ class TableBadge extends StatelessWidget {
                 ),
               ],
       ),
-      constraints: const BoxConstraints(maxWidth: 120),
+      constraints: const BoxConstraints(maxWidth: 140),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             context.l10n.tableLabel,
+            maxLines: 1,
+            softWrap: false,
             style: textTheme.labelSmall?.copyWith(
               color: fg.withValues(alpha: 0.75),
               letterSpacing: Directionality.of(context) == TextDirection.rtl
@@ -210,13 +228,15 @@ class TableBadge extends StatelessWidget {
           ),
           Text(
             tableName,
-            maxLines: 1,
+            maxLines: long ? 2 : 1,
             overflow: TextOverflow.ellipsis,
-            style: textTheme.titleLarge?.copyWith(
-              color: fg,
-              height: 1.1,
-              fontWeight: FontWeight.w800,
-            ),
+            textAlign: TextAlign.center,
+            style: (long ? textTheme.titleSmall : textTheme.titleLarge)
+                ?.copyWith(
+                  color: fg,
+                  height: long ? 1.15 : 1.1,
+                  fontWeight: FontWeight.w800,
+                ),
           ),
         ],
       ),

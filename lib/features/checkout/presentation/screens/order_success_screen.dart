@@ -1,10 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/localization/l10n.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/reveal.dart';
 import '../../domain/entities/order_receipt.dart';
@@ -85,6 +89,7 @@ class _OrderSuccessScreenState extends State<OrderSuccessScreen>
           end: 1,
           offset: const Offset(0, 1),
           child: _CtaBar(
+            receipt: widget.receipt,
             onPressed: () => context.go(AppRoutes.menu(widget.qrId)),
           ),
         ),
@@ -220,9 +225,39 @@ class _Hero extends StatelessWidget {
 }
 
 class _CtaBar extends StatelessWidget {
-  const _CtaBar({required this.onPressed});
+  const _CtaBar({required this.receipt, required this.onPressed});
 
+  final OrderReceipt receipt;
   final VoidCallback onPressed;
+
+  /// The web share sheet is missing on most desktop browsers (share_plus
+  /// falls back to `mailto:`), so the web copies the text instead.
+  Future<void> _share(BuildContext context) async {
+    final l10n = context.l10n;
+    final text = l10n.receiptShareText(
+      receipt.branchName,
+      receipt.tableName,
+      receipt.orderNumber,
+      CurrencyFormatter.format(receipt.total, currency: receipt.currency),
+    );
+    if (kIsWeb) {
+      final messenger = ScaffoldMessenger.of(context);
+      await Clipboard.setData(ClipboardData(text: text));
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(l10n.receiptCopied)));
+      return;
+    }
+    final box = context.findRenderObject() as RenderBox?;
+    await SharePlus.instance.share(
+      ShareParams(
+        text: text,
+        sharePositionOrigin: box == null
+            ? null
+            : box.localToGlobal(Offset.zero) & box.size,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -239,12 +274,62 @@ class _CtaBar extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 480),
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
-              child: CustomButton(
-                label: context.l10n.orderSomethingElse,
-                icon: Icons.restaurant_menu_rounded,
-                onPressed: onPressed,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: CustomButton(
+                      label: context.l10n.orderSomethingElse,
+                      icon: Icons.restaurant_menu_rounded,
+                      onPressed: onPressed,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Builder(
+                    builder: (context) => _ShareButton(
+                      tooltip: kIsWeb
+                          ? context.l10n.copyReceipt
+                          : context.l10n.shareReceipt,
+                      icon: kIsWeb
+                          ? Icons.copy_rounded
+                          : Icons.ios_share_rounded,
+                      onPressed: () => _share(context),
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShareButton extends StatelessWidget {
+  const _ShareButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = BorderRadius.circular(AppTheme.radiusMd);
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: AppColors.primarySoft,
+        borderRadius: radius,
+        child: InkWell(
+          borderRadius: radius,
+          onTap: onPressed,
+          child: SizedBox.square(
+            dimension: 54,
+            child: Icon(icon, color: AppColors.primary),
           ),
         ),
       ),

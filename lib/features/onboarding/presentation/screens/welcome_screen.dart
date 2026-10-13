@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/config/app_config.dart';
 import '../../../../core/localization/l10n.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/routing/deep_link_service.dart';
@@ -101,6 +100,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 28),
+                      CustomButton(
+                        label: l10n.scanQrCode,
+                        icon: Icons.qr_code_scanner_rounded,
+                        onPressed: () => context.push(AppRoutes.scan),
+                      ),
+                      const SizedBox(height: 16),
                       TextField(
                         controller: _link,
                         onChanged: (_) {
@@ -120,14 +125,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             onPressed: _openLink,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      CustomButton(
-                        label: l10n.welcomeDemoTable,
-                        icon: Icons.table_restaurant_rounded,
-                        variant: CustomButtonVariant.secondary,
-                        onPressed: () =>
-                            context.go(AppRoutes.table(AppConfig.demoQrId)),
                       ),
                     ],
                   ),

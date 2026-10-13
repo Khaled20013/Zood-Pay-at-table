@@ -18,6 +18,7 @@ import '../../../cart/presentation/cubit/cart_cubit.dart';
 import '../../../cart/presentation/widgets/cart_bottom_sheet.dart';
 import '../../../menu/presentation/cubit/menu_cubit.dart';
 import '../../../table_session/domain/entities/table_session.dart';
+import '../../../table_session/presentation/widgets/scan_table_button.dart';
 import '../../../table_session/presentation/widgets/table_header.dart';
 import '../../../table_session/presentation/widgets/table_session_gate.dart';
 import '../../data/repositories/order_repository_impl.dart';
@@ -127,6 +128,12 @@ class _CheckoutViewState extends State<_CheckoutView> {
         appBar: AppBar(
           leading: BackButton(onPressed: _backToMenu),
           title: Text(l10n.reviewAndPay),
+          actions: const [
+            Padding(
+              padding: EdgeInsetsDirectional.only(end: 12),
+              child: ScanTableButton(size: 40),
+            ),
+          ],
         ),
         body: BlocBuilder<CartCubit, CartState>(
           builder: (context, cart) {
@@ -187,6 +194,11 @@ class _CheckoutViewState extends State<_CheckoutView> {
                       ),
                       const SizedBox(height: 16),
                       _Section(
+                        title: l10n.summarySection,
+                        child: _Totals(cart: cart, session: _session),
+                      ),
+                      const SizedBox(height: 16),
+                      _Section(
                         title: l10n.cardSection,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,11 +220,6 @@ class _CheckoutViewState extends State<_CheckoutView> {
                             ],
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      _Section(
-                        title: l10n.summarySection,
-                        child: _Totals(cart: cart, session: _session),
                       ),
                     ],
                   ),

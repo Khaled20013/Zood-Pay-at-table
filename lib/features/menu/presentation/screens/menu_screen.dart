@@ -10,6 +10,7 @@ import '../../../../core/localization/l10n.dart';
 import '../../../../core/routing/app_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_snack_bar.dart';
+import '../../../../core/widgets/auto_dir_text.dart';
 import '../../../../core/widgets/fly_to_cart.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/loading_indicator.dart';
@@ -24,6 +25,7 @@ import '../widgets/category_bar.dart';
 import '../widgets/menu_visuals.dart';
 import '../widgets/product_artwork.dart';
 import '../widgets/product_card.dart';
+import '../../../table_session/presentation/widgets/scan_table_button.dart';
 import '../../../table_session/presentation/widgets/table_header.dart';
 import '../../../table_session/presentation/widgets/table_session_gate.dart';
 import 'product_details_dialog.dart';
@@ -66,6 +68,10 @@ class _MenuViewState extends State<_MenuView> {
 
   /// Set while a chip tap scrolls the menu, so the spy doesn't fight it.
   bool _scrollingToSection = false;
+
+  /// Chip the guest tapped. Stays highlighted until they scroll by hand,
+  /// since sections near the end can't scroll up to the bar.
+  String? _tappedSection;
 
   TableSession get _session => widget.session;
 
@@ -113,6 +119,10 @@ class _MenuViewState extends State<_MenuView> {
     if (_scrollingToSection || _sections.isEmpty || !_scroll.hasClients) {
       return;
     }
+    if (_sections.contains(_tappedSection)) {
+      _activeSection.value = _tappedSection;
+      return;
+    }
     final viewport = _scroll.position.context.notificationContext
         ?.findRenderObject();
     if (viewport is! RenderBox) return;
@@ -132,29 +142,42 @@ class _MenuViewState extends State<_MenuView> {
   }
 
   Future<void> _scrollToSection(String category) async {
-    final box = _sectionBox(category);
-    if (box == null || !_scroll.hasClients) return;
+    if (_sectionBox(category) == null || !_scroll.hasClients) return;
     _activeSection.value = category;
-    final position = _scroll.position;
-    final target =
-        (RenderAbstractViewport.of(box).getOffsetToReveal(box, 0).offset -
-                _pinnedExtent -
-                4)
-            .clamp(position.minScrollExtent, position.maxScrollExtent);
+    _tappedSection = category;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
     _scrollingToSection = true;
     try {
-      if (MediaQuery.disableAnimationsOf(context)) {
-        _scroll.jumpTo(target);
-      } else {
-        await _scroll.animateTo(
-          target,
-          duration: const Duration(milliseconds: 450),
-          curve: Curves.easeInOutCubic,
-        );
+      // The list only estimates the extent of items it hasn't built, so the
+      // first pass can stop short; a second pass lands on the real offset.
+      for (var pass = 0; pass < 2; pass++) {
+        final target = _sectionOffset(category);
+        if (target == null || (target - _scroll.offset).abs() < 1) break;
+        if (reduceMotion || pass > 0) {
+          _scroll.jumpTo(target);
+        } else {
+          await _scroll.animateTo(
+            target,
+            duration: const Duration(milliseconds: 450),
+            curve: Curves.easeInOutCubic,
+          );
+        }
+        if (!mounted || _tappedSection != category) break;
       }
     } finally {
       _scrollingToSection = false;
     }
+  }
+
+  /// Scroll offset that puts [category]'s header just under the bar.
+  double? _sectionOffset(String category) {
+    final box = _sectionBox(category);
+    if (box == null || !_scroll.hasClients) return null;
+    final position = _scroll.position;
+    return (RenderAbstractViewport.of(box).getOffsetToReveal(box, 0).offset -
+            _pinnedExtent -
+            4)
+        .clamp(position.minScrollExtent, position.maxScrollExtent);
   }
 
   void _goToCheckout() => context.push(AppRoutes.cart(_session.qrId));
@@ -171,11 +194,11 @@ class _MenuViewState extends State<_MenuView> {
     currency: _session.currency,
   );
 
-  /// Adds with the default options; opens the sheet when a required
-  /// modifier still needs a choice.
+  /// Plain products go straight to the cart; products with options open
+  /// the sheet (with their defaults picked) so the guest sees the choice.
   void _quickAdd(Product product, Rect origin) {
     final selection = ModifierSelection.initial(product);
-    if (!selection.isValid) {
+    if (product.hasModifiers || !selection.isValid) {
       _openProduct(product);
       return;
     }
@@ -189,25 +212,12 @@ class _MenuViewState extends State<_MenuView> {
       target: _cartTarget,
       icon: ProductArtwork.visualFor(product).icon,
     );
-    // The flight already confirms the add; the toast is kept to offer
-    // "Customize", or as the only feedback when motion is reduced.
-    if (!product.hasModifiers && !MediaQuery.disableAnimationsOf(context)) {
-      return;
-    }
+    // The flight confirms the add; the toast is only for reduced motion.
+    if (!MediaQuery.disableAnimationsOf(context)) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        menuSnackBar(
-          context,
-          message: context.l10n.itemAdded(product.name),
-          action: product.hasModifiers
-              ? SnackBarAction(
-                  label: context.l10n.customize,
-                  textColor: AppColors.accent,
-                  onPressed: () => _openProduct(product),
-                )
-              : null,
-        ),
+        menuSnackBar(context, message: context.l10n.itemAdded(product.name)),
       );
   }
 
@@ -277,50 +287,59 @@ class _MenuViewState extends State<_MenuView> {
             // under it instead of behind it.
             return SafeArea(
               bottom: false,
-              child: RefreshIndicator(
-                color: AppColors.primary,
-                onRefresh: () => context.read<MenuCubit>().retry(),
-                child: CustomScrollView(
-                  controller: _scroll,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  slivers: [
-                    SliverPadding(
-                      padding: EdgeInsets.fromLTRB(gutter, 12, gutter, 12),
-                      sliver: SliverToBoxAdapter(
-                        child: Column(
-                          children: [
-                            TableHeader(session: _session),
-                            const SizedBox(height: 14),
-                            _SearchField(
-                              controller: _search,
-                              onChanged: context.read<MenuCubit>().search,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (menu.status == MenuStatus.loaded && groups.isNotEmpty)
-                      SliverPersistentHeader(
-                        pinned: true,
-                        delegate: _CategoryHeaderDelegate(
-                          gutter: gutter - 16,
-                          child: ValueListenableBuilder<String?>(
-                            valueListenable: _activeSection,
-                            builder: (context, active, _) => CategoryBar(
-                              categories: _sections,
-                              selected: _sections.contains(active)
-                                  ? active!
-                                  : _sections.first,
-                              countFor: (c) => groups[c]?.length ?? 0,
-                              categoryIdOf: menu.categoryIdOf,
-                              onSelected: _scrollToSection,
-                            ),
+              child: NotificationListener<UserScrollNotification>(
+                onNotification: (n) {
+                  if (n.direction != ScrollDirection.idle) {
+                    _tappedSection = null;
+                  }
+                  return false;
+                },
+                child: RefreshIndicator(
+                  color: AppColors.primary,
+                  onRefresh: () => context.read<MenuCubit>().retry(),
+                  child: CustomScrollView(
+                    controller: _scroll,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverPadding(
+                        padding: EdgeInsets.fromLTRB(gutter, 12, gutter, 12),
+                        sliver: SliverToBoxAdapter(
+                          child: Column(
+                            children: [
+                              TableHeader(session: _session),
+                              const SizedBox(height: 14),
+                              _SearchField(
+                                controller: _search,
+                                onChanged: context.read<MenuCubit>().search,
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ..._buildContent(menu, gutter, groups),
-                    SliverToBoxAdapter(child: SizedBox(height: bottomInset)),
-                  ],
+                      if (menu.status == MenuStatus.loaded && groups.isNotEmpty)
+                        SliverPersistentHeader(
+                          pinned: true,
+                          delegate: _CategoryHeaderDelegate(
+                            gutter: gutter - 16,
+                            tableName: _session.tableName,
+                            child: ValueListenableBuilder<String?>(
+                              valueListenable: _activeSection,
+                              builder: (context, active, _) => CategoryBar(
+                                categories: _sections,
+                                selected: _sections.contains(active)
+                                    ? active!
+                                    : _sections.first,
+                                countFor: (c) => groups[c]?.length ?? 0,
+                                categoryIdOf: menu.categoryIdOf,
+                                onSelected: _scrollToSection,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ..._buildContent(menu, gutter, groups),
+                      SliverToBoxAdapter(child: SizedBox(height: bottomInset)),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -453,6 +472,7 @@ class _MenuViewState extends State<_MenuView> {
               sliver: _ProductGrid(
                 products: entry.value,
                 currency: _session.currency,
+                highlight: menu.query,
                 onTap: _openProduct,
                 onQuickAdd: _quickAdd,
               ),
@@ -469,10 +489,12 @@ class _ProductGrid extends StatelessWidget {
     required this.currency,
     required this.onTap,
     required this.onQuickAdd,
+    this.highlight = '',
   });
 
   final List<Product> products;
   final String currency;
+  final String highlight;
   final ValueChanged<Product> onTap;
   final void Function(Product product, Rect origin) onQuickAdd;
 
@@ -494,6 +516,7 @@ class _ProductGrid extends StatelessWidget {
             product: product,
             currency: currency,
             quantityInCart: cart.quantityOf(product.id),
+            highlight: highlight,
             onTap: () => onTap(product),
             onQuickAdd: (origin) => onQuickAdd(product, origin),
           );
@@ -533,11 +556,15 @@ class _SectionTitle extends StatelessWidget {
           child: Icon(visual.icon, size: 18, color: tint),
         ),
         const SizedBox(width: 10),
-        Text(
-          title,
-          style: textTheme.titleLarge?.copyWith(
-            fontSize: 19,
-            fontWeight: FontWeight.w800,
+        Flexible(
+          child: AutoDirText(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: textTheme.titleLarge?.copyWith(
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
         const SizedBox(width: 8),
@@ -614,11 +641,28 @@ class _SearchField extends StatelessWidget {
   }
 }
 
+/// Clips chips scrolled under the scan button but keeps their shadows.
+class _SidesClipper extends CustomClipper<Rect> {
+  const _SidesClipper();
+
+  @override
+  Rect getClip(Size size) =>
+      Rect.fromLTRB(0, -24, size.width, size.height + 24);
+
+  @override
+  bool shouldReclip(_SidesClipper old) => false;
+}
+
 class _CategoryHeaderDelegate extends SliverPersistentHeaderDelegate {
-  _CategoryHeaderDelegate({required this.child, required this.gutter});
+  _CategoryHeaderDelegate({
+    required this.child,
+    required this.gutter,
+    required this.tableName,
+  });
 
   final Widget child;
   final double gutter;
+  final String tableName;
 
   @override
   double get minExtent => CategoryBar.height;
@@ -628,29 +672,28 @@ class _CategoryHeaderDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlaps) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        boxShadow: overlaps
-            ? const [
-                BoxShadow(
-                  color: Color(0x12000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 2),
-                ),
-              ]
-            : null,
-      ),
+    return ColoredBox(
+      color: AppColors.background,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: gutter),
-        child: child,
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsetsDirectional.only(start: 16),
+              child: TableSwitchPill(tableName: tableName),
+            ),
+            Expanded(
+              child: ClipRect(clipper: const _SidesClipper(), child: child),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   @override
   bool shouldRebuild(covariant _CategoryHeaderDelegate old) =>
-      old.child != child || old.gutter != gutter;
+      old.child != child || old.gutter != gutter || old.tableName != tableName;
 }
 
 class _SideCartPanel extends StatelessWidget {

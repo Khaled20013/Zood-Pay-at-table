@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../../core/widgets/animated_amount.dart';
+import '../../../../core/widgets/auto_dir_text.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../domain/entities/cart_item.dart';
 import '../../../table_session/domain/entities/table_session.dart';
@@ -297,11 +298,11 @@ class CartLineTile extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(item.product.name, style: textTheme.titleMedium),
+              AutoDirText(item.product.name, style: textTheme.titleMedium),
               if (item.selectedOptions.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
-                  child: Text(
+                  child: AutoDirText(
                     item.optionsSummary,
                     style: textTheme.bodySmall?.copyWith(
                       color: AppColors.inkMuted,

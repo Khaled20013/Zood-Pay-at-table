@@ -13,6 +13,7 @@ extension AppLocalizationsX on AppLocalizations {
   String errorText(AppException? error) => switch (error) {
     QrNotFoundException() => errorQrNotFound,
     TableUnavailableException() => errorTableUnavailable,
+    ServiceUnavailableException() => errorServiceUnavailable,
     NetworkException() => errorNetwork,
     CardDeclinedException(:final serverMessage) =>
       serverMessage == null
@@ -29,11 +30,14 @@ extension AppLocalizationsX on AppLocalizations {
   String tableErrorTitle(AppException? error) => switch (error) {
     QrNotFoundException() => errorQrNotFound,
     TableUnavailableException() => errorTableUnavailable,
+    ServiceUnavailableException() => serviceUnavailableTitle,
+    NetworkException() => networkErrorTitle,
     _ => scanNotFoundTitle,
   };
 
   String tableErrorMessage(AppException? error) => switch (error) {
     QrNotFoundException() || TableUnavailableException() => askStaffForHelp,
+    ServiceUnavailableException() => errorServiceUnavailable,
     _ => errorText(error),
   };
 
