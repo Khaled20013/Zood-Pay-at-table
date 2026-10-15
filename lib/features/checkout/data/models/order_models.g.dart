@@ -13,6 +13,7 @@ Map<String, dynamic> _$OrderRequestModelToJson(OrderRequestModel instance) =>
       'customer_notes': instance.customerNotes,
       'products': instance.products.map((e) => e.toJson()).toList(),
       'card': instance.card.toJson(),
+      'pat_kds_message': ?instance.patKdsMessage,
     };
 
 Map<String, dynamic> _$OrderProductModelToJson(OrderProductModel instance) =>

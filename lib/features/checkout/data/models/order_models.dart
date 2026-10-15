@@ -21,6 +21,7 @@ class OrderRequestModel {
     required this.customerNotes,
     required this.products,
     required this.card,
+    this.patKdsMessage,
   });
 
   final String qrId;
@@ -28,6 +29,11 @@ class OrderRequestModel {
   final String customerNotes;
   final List<OrderProductModel> products;
   final CardModel card;
+
+  /// Multipeer kitchen wire from `PatKdsMessage` (Self Order parity with
+  /// `kiosk_kds_message`). Backend relays it on Pusher `record.pat_kds_message`.
+  @JsonKey(includeIfNull: false)
+  final String? patKdsMessage;
 
   Map<String, dynamic> toJson() => _$OrderRequestModelToJson(this);
 }

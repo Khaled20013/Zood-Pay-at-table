@@ -1,0 +1,146 @@
+# Pay-at-Table Pusher — keys for backend
+
+Send this list to backend. Channel / event only; payload keys below.
+
+Channel: `private-pay-at-table-orders.{deviceCode}`
+Event:   `pay-at-table-order`
+
+Flutter also sends `pat_kds_message` on `POST /public/pay-at-table/orders`.
+Backend must accept it and put it on `record.pat_kds_message` (rewrite leading
+ticket `#` if client sent `0`).
+
+---
+
+## 1) Wrapper — `orders[]` item
+
+Required
+- `order_id`          string UUID  (must match `record.order_id`)
+- `record`            object
+
+Recommended
+- `created_at`        number (unix)
+- `table_name`        string
+- `number`            number | string  (ticket #)
+- `reference`         string  (e.g. `#R000390`)
+
+Drop from wrapper (not needed on Pusher)
+- `branch_id`, `branch_name`, `qr_id`, `client_order_id`
+- `kiosk_device_id`, `kiosk_device_name`, `source`, `type`, `status`
+- `table_id`, `subtotal_price`, `total_price`  (totals live in `record`)
+
+---
+
+## 2) `record` — required
+
+- `order_id`          string UUID
+- `local_id`          string          (ticket #, e.g. `"390"`)
+- `price`             string          (total, e.g. `"128.80"`)
+- `products`          JSON **string** (array stringified — not a raw array)
+- `AmountBreakUp`     JSON **string** (payment rows, or `"[]"`)
+
+## 3) `record` — strongly recommended
+
+- `subtotal_price`    string
+- `TotalTaxOrder`     string
+- `todayOrderId`      string          (usually same as `local_id`)
+- `refernceNumber`    string          (typo is intentional — Cashier key)
+- `order_type`        string          (`"0"` = dine-in)
+- `paymentStatus`     string          (`"Complete"`)
+- `DeviceName`        string          (table name)
+- `assignTableNumber` string          (table name)
+- `bDate`             string          (`yyyy-MM-dd`)
+- `Created_At`        string          (`yyyy-MM-dd-HH:mm:ss`)
+- `pat_kds_message`   string          **preferred kitchen wire** (starts with `------`)
+- `kiosk_kds_message` string          legacy fallback if `pat_kds_message` missing
+- `charges`           JSON string     (safe `"[]"`)
+- `sentToKitchen`     string          (`"Yes"`)
+
+Cashier auto-fills many other bulk keys if missing — omit them.
+
+---
+
+## 4) Inside `products` (string) — per line
+
+Required
+- `product_id`
+- `productName`
+- `qty`
+- `productprice`              string
+- `productPriceWithOutTax`    string
+- `singleitem`                number
+- `Tax`                       string  (e.g. `"15"`)
+- `category_id`
+- `modifier`                  array of Cashier modifier objects (NOT PAT `options`)
+
+Recommended
+- `ar_name`
+- `ProductSizeName`
+- `ProductSizeid`
+- `TaxGroup`
+- `TaxOnProduct`
+- `notes`
+- `CourseName`
+- `iscombo`
+- `dicountProduct`
+
+---
+
+## 5) Inside `modifier[]` — per option
+
+Required shape (or Cashier UI hides modifiers):
+
+- `modiId`            string
+- `modiName`          string
+- `modiPrice`         string          (e.g. `"5.00"`)
+- `quantityAdded`     string          (**must be string**, e.g. `"1"`)
+- `ProductId`         string
+- `parentName`        string
+- `option_id`         string
+- `isUnique`          string          (`"0"` / `"1"`)
+
+Optional
+- `Tax`
+- `tax_group_id`
+
+Map Flutter `options[{modifier_option_id, quantity}]` → this shape
+(name + price from catalog). Never leave `modifier: []` when guest picked options.
+
+---
+
+## 6) Inside `AmountBreakUp` (string) — minimal payment row
+
+- `Method`            string  (`"CARD"`)
+- `CardName`          string  (`"Card"`)
+- `Tendered`          string
+- `Due`               string
+- `Change`            string  (`"0.00"`)
+- `Tips`              string  (`"0.00"`)
+- `date`              string  (`yyyy-MM-dd`)
+- `Time`              string  (`HH:mm:ss`)
+
+---
+
+## 7) `pat_kds_message` — kitchen wire
+
+- Accept on create-order body as `pat_kds_message`
+- Relay to Pusher `record.pat_kds_message`
+- If leading number is `0`, rewrite to real ticket `number`
+- Must start with `------`, no newlines
+- Do not re-encode product lines
+
+Example shape:
+```
+------390--[[{"ProductName":"…","qtyAddded":1,"Modifiers":",1 X …",…}]]----NO--0--PayAtTable--0--{order_id}
+```
+
+---
+
+## Quick checklist for backend
+
+[ ] Channel + event as above
+[ ] Wrapper: `order_id` + `record`
+[ ] `record.products` and `record.AmountBreakUp` are **strings**
+[ ] Each product has Cashier `modifier[]` (not empty when options exist)
+[ ] `quantityAdded` is a **string**
+[ ] Accept + relay `pat_kds_message` (rewrite ticket # if `0`)
+[ ] Prefer `pat_kds_message`; keep `kiosk_kds_message` as fallback only

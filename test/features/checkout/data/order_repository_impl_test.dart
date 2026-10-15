@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zood_pay_at_table/core/config/cashier_pusher_contract.dart';
 import 'package:zood_pay_at_table/core/error/app_exception.dart';
 import 'package:zood_pay_at_table/core/network/demo_data_policy.dart';
 import 'package:zood_pay_at_table/features/cart/domain/entities/cart_item.dart';
 import 'package:zood_pay_at_table/features/checkout/data/datasources/orders_api.dart';
+import 'package:zood_pay_at_table/features/checkout/data/models/order_models.dart';
 import 'package:zood_pay_at_table/features/checkout/data/repositories/order_repository_impl.dart';
 import 'package:zood_pay_at_table/features/checkout/domain/entities/card_details.dart';
 import 'package:zood_pay_at_table/features/menu/domain/entities/modifier_selection.dart';
@@ -72,29 +74,53 @@ void main() {
       expect(request.method, 'POST');
       expect(request.uri.path, '/api/v1/public/pay-at-table/orders');
       expect(request.headers.containsKey('Authorization'), isFalse);
-      expect(request.data, {
-        'qr_id': demoQrId,
-        'client_order_id': 'client-1',
-        'customer_notes': 'window seat',
-        'products': [
-          {
-            'product_id': 'prd_karak_tea',
-            'quantity': 2,
-            'notes': 'extra hot',
-            'options': [
-              {'modifier_option_id': 'opt_large', 'quantity': 1},
-              {'modifier_option_id': 'opt_vanilla', 'quantity': 2},
-            ],
-          },
-        ],
-        'card': {
-          'holder_name': 'AHMED ALI',
-          'number': '4111111111111111',
-          'expiry_month': '08',
-          'expiry_year': '2028',
-          'cvc': '123',
+      final body = request.data as Map<String, dynamic>;
+      expect(body['qr_id'], demoQrId);
+      expect(body['client_order_id'], 'client-1');
+      expect(body['customer_notes'], 'window seat');
+      expect(body['products'], [
+        {
+          'product_id': 'prd_karak_tea',
+          'quantity': 2,
+          'notes': 'extra hot',
+          'options': [
+            {'modifier_option_id': 'opt_large', 'quantity': 1},
+            {'modifier_option_id': 'opt_vanilla', 'quantity': 2},
+          ],
         },
+      ]);
+      expect(body['card'], {
+        'holder_name': 'AHMED ALI',
+        'number': '4111111111111111',
+        'expiry_month': '08',
+        'expiry_year': '2028',
+        'cvc': '123',
       });
+      // Same Multipeer shape as Self Order `kiosk_kds_message`.
+      final kds = body[CashierPusherContract.patKdsMessageKey] as String;
+      expect(kds, startsWith('------0--[['));
+      expect(kds, contains('"ProductName":"Karak Tea"'));
+      expect(kds, contains('"qtyAddded":2'));
+      expect(kds, contains('"Modifiers":",1 X Large,1 X Vanilla,1 X Vanilla"'));
+      expect(kds, contains('"NotesProduct":"extra hot"'));
+      expect(kds, endsWith('--NO--0--PayAtTable--0--client-1'));
+    });
+
+    test('omits pat_kds_message from JSON when null', () {
+      const request = OrderRequestModel(
+        qrId: demoQrId,
+        clientOrderId: 'client-1',
+        customerNotes: '',
+        products: [],
+        card: CardModel(
+          holderName: 'A',
+          number: '4111111111111111',
+          expiryMonth: '08',
+          expiryYear: '2028',
+          cvc: '123',
+        ),
+      );
+      expect(request.toJson().containsKey('pat_kds_message'), isFalse);
     });
 
     test('maps the response to the receipt (200 = already paid)', () async {

@@ -1,0 +1,221 @@
+# Pay-at-Table Pusher — minimal keys Cashier actually needs
+
+Channel: `private-pay-at-table-orders.{deviceCode}`  
+Event: `pay-at-table-order`
+
+Cashier fills empty strings / `"0"` / `"[]"` for many `orders/bulk` fields.
+**Do not send the full 9KB kiosk dump** — keep only what is listed below.
+
+---
+
+## Wrapper (`orders[]` item)
+
+### Required
+| Key | Type | Notes |
+| --- | --- | --- |
+| `order_id` | string UUID | must match `record.order_id` |
+| `record` | object | Cashier `orders/bulk` row |
+
+### Recommended (UI / ticket)
+| Key | Type | Notes |
+| --- | --- | --- |
+| `created_at` | number | unix |
+| `table_name` | string | alert + list label |
+| `number` | number/string | fallback for `local_id` |
+| `reference` | string | e.g. `#R000390` |
+
+### Drop from wrapper
+`branch_id`, `branch_name`, `qr_id`, `client_order_id`, `kiosk_device_id`, `kiosk_device_name`, `source`, `type`, `status`, `table_id`, `subtotal_price`, `total_price` (totals belong in `record`), etc.
+
+---
+
+## `record` — required (reject without these)
+
+| Key | Type | Example |
+| --- | --- | --- |
+| `order_id` | string | UUID |
+| `local_id` | string | `"390"` (ticket #) |
+| `price` | string | `"128.80"` (numeric string) |
+| `products` | **JSON string** | array of product objects, stringified |
+| `AmountBreakUp` | **JSON string** | payment rows, or `"[]"` |
+
+### Strongly recommended
+| Key | Type | Why |
+| --- | --- | --- |
+| `subtotal_price` | string | `"112.00"` |
+| `TotalTaxOrder` | string | `"16.80"` |
+| `todayOrderId` | string | usually same as `local_id` |
+| `refernceNumber` | string | `#R000390` |
+| `order_type` | string | `"0"` dine-in |
+| `paymentStatus` | string | `"Complete"` (Cashier also forces this) |
+| `DeviceName` | string | table name for list |
+| `assignTableNumber` | string | table name |
+| `bDate` | string | `yyyy-MM-dd` |
+| `Created_At` | string | `yyyy-MM-dd-HH:mm:ss` |
+| `pat_kds_message` | string | **preferred kitchen wire** — same Multipeer shape as kiosk, must start with `------` |
+| `kiosk_kds_message` | string | **legacy fallback** if `pat_kds_message` missing |
+
+### Cashier auto-fills if missing (safe to omit)
+`charges`, `TipData`, `TipAmount`, `due_time`, `session`, `sentToKitchen`,  
+`orderCreatedBy`, `PaymentBy`, `OrderEditBy`, `OrderOpenedat`, `OrderClosedat`,  
+`isDeliveryPartner`, `DeliveryPartnerName`, `DeliveryPartnerOrderID`,  
+`void`, `void_reason`, `join_status`, `discountMain`, `couponName`, `couponAmount`,  
+`person`, `customer_notes`, `order_note`, and the rest of the long bulk keys.
+
+---
+
+## Inside `products` (string) — per line, required
+
+`products` must be a **string**, not a raw array.
+
+### Must have
+| Key | Type |
+| --- | --- |
+| `product_id` | string |
+| `productName` | string |
+| `qty` | number |
+| `productprice` | string |
+| `productPriceWithOutTax` | string |
+| `singleitem` | number |
+| `Tax` | string (e.g. `"15"`) |
+| `category_id` | string |
+| `modifier` | array of **Cashier modifier objects** (not PAT `options`) |
+
+### `modifier[]` — required shape (or UI will hide them)
+```json
+"modifier": [
+  {
+    "modiId": "option-uuid",
+    "modiName": "Extra cheese",
+    "modiPrice": "2.00",
+    "quantityAdded": "1",
+    "ProductId": "product-uuid",
+    "parentName": "pizza3",
+    "option_id": "option-uuid",
+    "isUnique": "0"
+  }
+]
+```
+**Critical:** `quantityAdded` must be a **string** (`"1"`), and `modiName` must be present.  
+Do **not** leave `modifier: []` if the guest selected options — map PAT `options[{modifier_option_id, quantity}]` into this shape (with name + price from catalog).
+
+### Working Kiosk vs broken PAT — same pizza3 + كبير (`#531` vs `#396`)
+
+| | Kiosk `#531` (works) | PAT `#396` (broken) |
+| --- | --- | --- |
+| Header totals | `price 350.75` / tax `45.75` | same |
+| Product base | `singleitem 300`, `totalbeforetax 305` | same |
+| `modifier` | **filled** (see below) | **`[]` empty** |
+| KDS wire | `Modifiers: ",1 X كبير"` + `ProductName`/`qtyAddded` | `mods: []` + `{name,qty,mods}` |
+
+**Kiosk product.modifier (copy this into PAT):**
+```json
+"modifier": [{
+  "modiId": "b492aa5a-bc2b-4ec6-9084-3a33c62b75d1",
+  "modiName": "كبير",
+  "modiPrice": "5.00",
+  "quantityAdded": "1",
+  "ProductId": "1d25bbfd-32a9-45f1-b2c5-b8ca0f96845e",
+  "parentName": "pizza3",
+  "option_id": "f1dcf810-7d2a-4bf1-9b94-d0bd146c7d80",
+  "isUnique": "0",
+  "Tax": "15.00",
+  "tax_group_id": "77b0c15d-4b56-4543-9e37-a4549b668b94"
+}]
+```
+
+PAT already receives `options: [{modifier_option_id, quantity}]` from Flutter — backend must expand that id into the Cashier `modifier` object above (name/price from catalog), same as Self Order / Kiosk does.
+
+### Bug proof — order `#394` (2026-10-14)
+Backend sent header totals that **include** modifiers:
+- `price: "681.90"`, `subtotal_price: "606.00"`, `TotalTaxOrder: "75.90"`
+
+But every product had `"modifier": []`, and KDS had `"mods": []`.  
+On `burger 2` the option money was **baked into the line** instead:
+- `qty: 3`, `singleitem: 100` → base `300`
+- `totalbeforetax: 306` → **+6** modifier pre-tax (never listed)
+- `TaxOnProduct: 45.9` (= 15% of 306)
+
+Cashier UI then recomputes `3×100=300` → SubTotal `600` / Total `675` and shows **no** modifiers.  
+**Fix on backend:** put real Cashier `modifier[]` on the product (name + price), and keep `totalbeforetax` consistent. Also fill `kiosk_kds_message` `mods` the same way.
+
+### Recommended
+`ar_name`, `ProductSizeName`, `ProductSizeid`, `TaxGroup`, `TaxOnProduct`,  
+`notes`, `CourseName`, `iscombo`, `dicountProduct`
+
+### Cashier fills if missing
+kitchen flags, promotion fields, void/edit flags, combo stubs, `colorForProdcut`, etc.
+
+---
+
+## `AmountBreakUp` (string) — minimal payment row
+
+```json
+"[{\"Method\":\"CARD\",\"CardName\":\"Card\",\"Tendered\":\"128.80\",\"Due\":\"128.80\",\"Change\":\"0.00\",\"Tips\":\"0.00\",\"date\":\"2026-10-14\",\"Time\":\"15:17:43\"}]"
+```
+
+Drop optional card-scheme / RRN / approval fields if you want smaller payloads.
+
+---
+
+## `pat_kds_message` (for kitchen) — preferred
+
+**Flutter (PAT) now builds this on the client** (same cycle as Self Order
+`kiosk_kds_message`) and sends it on `POST /public/pay-at-table/orders` as
+`pat_kds_message`.
+
+Backend must:
+1. **Accept** `pat_kds_message` on create-order (string, Multipeer wire).
+2. Put it on Pusher `record.pat_kds_message`.
+3. If the leading ticket # is `0` (provisional — client does not know the
+   server number yet), **rewrite** it to the real `number` before broadcast.
+4. Do not drop or re-encode product lines; Cashier/KDS parse this wire as-is.
+
+Cashier reads `pat_kds_message` first, then falls back to `kiosk_kds_message`.
+
+Must:
+- start with `------`
+- contain **no newlines**
+
+Same product wire as Self Order kiosk (`ProductName`, `qtyAddded`, `Modifiers`, …), e.g.:
+
+```
+------540--[[{"ProductName":"pizza3","qtyAddded":1,"Modifiers":",1 X كبير",...}]]----NO--0--PayAtTable--{cashierId}--{order_id}
+```
+
+---
+
+## Minimal example (~much smaller than 9KB)
+
+```json
+{
+  "orders": [
+    {
+      "order_id": "a1bfde37-9b02-43d6-b20a-e40aec7572e3",
+      "created_at": 1791980263,
+      "table_name": "FIRST FLOOR 2",
+      "number": 390,
+      "reference": "#R000390",
+      "record": {
+        "order_id": "a1bfde37-9b02-43d6-b20a-e40aec7572e3",
+        "local_id": "390",
+        "todayOrderId": "390",
+        "refernceNumber": "#R000390",
+        "price": "128.80",
+        "subtotal_price": "112.00",
+        "TotalTaxOrder": "16.80",
+        "order_type": "0",
+        "paymentStatus": "Complete",
+        "DeviceName": "FIRST FLOOR 2",
+        "assignTableNumber": "FIRST FLOOR 2",
+        "bDate": "2026-10-14",
+        "Created_At": "2026-10-14-15:17:43",
+        "products": "[{\"product_id\":\"…\",\"productName\":\"burger 2\",\"ar_name\":\"burger 2\",\"ProductSizeName\":\"burger 2\",\"ProductSizeid\":\"…\",\"category_id\":\"…\",\"qty\":1,\"productprice\":\"10.00\",\"productPriceWithOutTax\":\"10.00\",\"singleitem\":10,\"Tax\":\"15\",\"TaxGroup\":\"…\",\"TaxOnProduct\":1.5,\"modifier\":[],\"notes\":\".\",\"iscombo\":\"0\",\"CourseName\":\"Course 1\"}]",
+        "AmountBreakUp": "[{\"Method\":\"CARD\",\"CardName\":\"Card\",\"Tendered\":\"128.80\",\"Due\":\"128.80\",\"Change\":\"0.00\",\"Tips\":\"0.00\",\"date\":\"2026-10-14\",\"Time\":\"15:17:43\"}]",
+        "charges": "[]",
+        "pat_kds_message": "------390--[[…kiosk-shaped lines…]]----NO--0--PayAtTable--{cashierId}--a1bfde37-…"
+      }
+    }
+  ]
+}
+```

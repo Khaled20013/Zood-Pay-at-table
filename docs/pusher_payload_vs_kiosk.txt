@@ -1,0 +1,229 @@
+# Pay-at-Table Pusher vs Kiosk Pusher — backend alignment
+
+Cashier already listens on `private-pay-at-table-orders.{deviceCode}` / event `pay-at-table-order`.
+
+**Ask:** broadcast the **same payload shape as Kiosk Pusher** (`kiosk-order`), only change channel / event names.
+
+Live comparison from Cashier logs (same branch, same product “burger” ~SAR 115).
+
+---
+
+## 1. What Kiosk sends today (target)
+
+```json
+{
+  "orders": [
+    {
+      "order_id": "575afb78-c21c-41bc-bff3-2e4d58f543af",
+      "kiosk_device_id": 14819,
+      "kiosk_device_name": "testflight self order",
+      "created_at": 1791977126,
+      "record": {
+        "order_id": "575afb78-c21c-41bc-bff3-2e4d58f543af",
+        "local_id": "509",
+        "todayOrderId": "509",
+        "refernceNumber": "509",
+        "price": "115.00",
+        "subtotal_price": "100.00",
+        "TotalTaxOrder": "15.00",
+        "order_type": "0",
+        "paymentStatus": 4,
+        "products": "[{...full cashier product line as JSON STRING...}]",
+        "AmountBreakUp": "[{...payment breakup as JSON STRING...}]",
+        "charges": "[]",
+        "TipData": "[]",
+        "DeviceName": "Zood Self Order",
+        "DeviceId": "...",
+        "Created_At": "2026-10-14-14:25:24",
+        "OrderOpenedat": "2026-10-14-14:25:24",
+        "OrderClosedat": "2026-10-14-14:25:24",
+        "bDate": "2026-10-14",
+        "sentToKitchen": "Yes",
+        "kiosk_kds_message": "------509--[[...]]----NO--0--SelfOrder--...",
+        "...many other cashier orders/bulk fields..."
+      }
+    }
+  ]
+}
+```
+
+---
+
+## 2. What Pay-at-Table sends today (broken / incomplete)
+
+```json
+{
+  "orders": [
+    {
+      "order_id": "1d031549-1156-42a4-b70f-7721a93f1cd6",
+      "reference": "#R000387",
+      "number": 387,
+      "table_name": "FIRST FLOOR 2",
+      "subtotal_price": 100,
+      "total_price": 115,
+      "created_at": 1791977159,
+      "record": {
+        "products": [
+          {
+            "product_id": "...",
+            "name": "burger",
+            "quantity": 1,
+            "unit_price": 100,
+            "total_price": 115,
+            "notes": null,
+            "options": []
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+---
+
+## 3. Diff checklist (send this to backend)
+
+### A. Wrapper (`orders[]` item)
+
+| Field | Kiosk | PAT today | Action |
+| --- | --- | --- | --- |
+| `order_id` | ✅ UUID | ✅ | keep |
+| `created_at` | ✅ unix | ✅ | keep |
+| `kiosk_device_name` / source label | ✅ device name | ❌ use `table_name` instead | OK to keep `table_name`, **also** put label inside `record.DeviceName` / `assignTableNumber` |
+| `record` | ✅ full bulk row | ❌ products-only | **must be full cashier `orders/bulk` row** |
+
+PAT-only wrapper fields (`reference`, `number`, `branch_*`, `table_*`, `qr_id`, …) can stay **extra**, but they must **not** replace `record`.
+
+### B. `record` — required (missing on PAT)
+
+| Field | Example (kiosk) | Notes |
+| --- | --- | --- |
+| `order_id` | same UUID as wrapper | string |
+| `local_id` | `"509"` | ticket # — map from PAT `number` |
+| `todayOrderId` | `"509"` | same as local_id usually |
+| `refernceNumber` | `"509"` or `#R000387` | |
+| `price` | `"115.00"` | **string**, = total |
+| `subtotal_price` | `"100.00"` | **string** |
+| `TotalTaxOrder` | `"15.00"` | **string** |
+| `order_type` | `"0"` | dine-in |
+| `paymentStatus` | `4` or `"Complete"` | cashier accepts paid |
+| `products` | **JSON string** (not array) | see section C |
+| `AmountBreakUp` | **JSON string** of payment rows | see section D |
+| `charges` | `"[]"` | JSON string |
+| `TipData` | `"[]"` | JSON string |
+| `DeviceName` | table or `"Pay at Table"` | |
+| `DeviceId` | cashier/device id if known | |
+| `Created_At` / `OrderOpenedat` / `OrderClosedat` | `yyyy-MM-dd-HH:mm:ss` | |
+| `bDate` | `yyyy-MM-dd` | business date |
+| `sentToKitchen` | `"Yes"` | |
+| `kiosk_kds_message` | Multipeer wire starting with `------` | **required for kitchen / KDS** |
+
+### C. `products` — must be a **string**, cashier product shape
+
+PAT today (wrong):
+
+```json
+"products": [{ "name": "burger", "quantity": 1, "unit_price": 100, ... }]
+```
+
+Kiosk (correct):
+
+```json
+"products": "[{\"productName\":\"burger\",\"qty\":1,\"productprice\":\"100.00\",\"productPriceWithOutTax\":\"100.00\",\"singleitem\":100.0,\"Tax\":\"15\",\"TaxGroup\":\"...\",\"category_id\":\"...\",\"ProductSizeid\":\"...\",\"ProductSizeName\":\"burger\",\"ar_name\":\"burger\",\"modifier\":[],\"notes\":\"\",\"iscombo\":\"0\",\"CourseName\":\"Course 1\",\"productSendToKitchen\":\"YES\", ...}]"
+```
+
+Minimum fields Cashier force-reads when opening an order:
+
+- `product_id`, `productName`, `ar_name`, `ProductSizeName`, `ProductSizeid`
+- `qty` (**number**), `category_id`
+- `productprice`, `productPriceWithOutTax`, `singleitem` (**number**)
+- `Tax`, `TaxGroup`, `TaxOnProduct`
+- `modifier` (array, can be `[]`)
+- `notes`, `dicountProduct`, `iscombo`, `ComboGroupCount`, `ComboOptionDescription`
+- `productSendToKitchen`, `sendtoKitchenKDS`, `sendtoKitchenPrinter`, `isKDSAvaialble`, `isPrinterAvailable`
+- `CourseName`, `FirstTimeToKitchen`, `colorForProdcut`, `pricing_method`, …
+
+Map from PAT menu lines:
+
+| PAT field | Cashier field |
+| --- | --- |
+| `name` | `productName`, `ar_name`, `ProductSizeName` |
+| `quantity` | `qty` (number) |
+| `unit_price` | `productprice`, `productPriceWithOutTax`, `singleitem` |
+| `total_price` | line total helpers |
+| `options` | `modifier` (cashier modifier shape) |
+| `product_id` | `product_id`, often also `ProductSizeid` |
+| (from catalog) | `category_id`, `Tax`, `TaxGroup` |
+
+### D. `AmountBreakUp` — JSON **string**
+
+Example from kiosk:
+
+```json
+"AmountBreakUp": "[{\"Method\":\"CARD\",\"CardName\":\"Card\",\"Tendered\":\"115.00\",\"Due\":\"115.00\",\"Change\":\"0.00\",\"Tips\":\"0.0\",\"date\":\"2026-10-14\",\"Time\":\"14:25:24\", ...}]"
+```
+
+Empty paid placeholder is better than missing: `"[]"` only if you accept reports with no tender breakdown; prefer a real payment row.
+
+### E. Kitchen — `kiosk_kds_message`
+
+Without this, Cashier shows **Waiting for a kitchen screen** and `kds=0`.
+
+Kiosk format (prefix required):
+
+```text
+------{orderNumber}--[[{kds product lines}]]----NO--0--SelfOrder--{cashierId}--{order_id}
+```
+
+For PAT, source label can be `PayAtTable` instead of `SelfOrder`, but **must still start with `------`** and contain no newlines.
+
+---
+
+## 4. Minimal “correct” PAT event (same contract as kiosk)
+
+```json
+{
+  "orders": [
+    {
+      "order_id": "1d031549-1156-42a4-b70f-7721a93f1cd6",
+      "created_at": 1791977159,
+      "table_name": "FIRST FLOOR 2",
+      "record": {
+        "order_id": "1d031549-1156-42a4-b70f-7721a93f1cd6",
+        "local_id": "387",
+        "todayOrderId": "387",
+        "refernceNumber": "#R000387",
+        "price": "115.00",
+        "subtotal_price": "100.00",
+        "TotalTaxOrder": "15.00",
+        "order_type": "0",
+        "paymentStatus": "Complete",
+        "products": "[{...cashier product string...}]",
+        "AmountBreakUp": "[{...}]",
+        "charges": "[]",
+        "TipData": "[]",
+        "DeviceName": "FIRST FLOOR 2",
+        "assignTableNumber": "FIRST FLOOR 2",
+        "Created_At": "2026-10-14-14:25:59",
+        "OrderOpenedat": "2026-10-14-14:25:59",
+        "OrderClosedat": "2026-10-14-14:25:59",
+        "bDate": "2026-10-14",
+        "sentToKitchen": "Yes",
+        "kiosk_kds_message": "------387--[[...]]----NO--0--PayAtTable--{cashierId}--1d031549-1156-42a4-b70f-7721a93f1cd6"
+      }
+    }
+  ]
+}
+```
+
+Channel / event stay PAT-specific:
+
+- Channel: `pay-at-table-orders.{deviceCode}` (Cashier joins as `private-…`)
+- Event: `pay-at-table-order`
+
+---
+
+## 5. One-line ask for backend
+
+> Please make `pay-at-table-order` broadcast the same `orders[].record` shape as `kiosk-order` (Cashier `orders/bulk` row): `products` and `AmountBreakUp` as JSON **strings**, full product cashier fields, and `kiosk_kds_message`. Keep PAT wrapper metadata if useful, but do not leave `record` as `{ products: [...] }` only.

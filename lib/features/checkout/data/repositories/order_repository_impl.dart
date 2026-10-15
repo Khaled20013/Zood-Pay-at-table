@@ -8,6 +8,7 @@ import '../../domain/repositories/order_repository.dart';
 import '../datasources/dummy_order_data.dart';
 import '../datasources/orders_api.dart';
 import '../models/order_models.dart';
+import '../pat_kds_message.dart';
 
 class OrderRepositoryImpl implements OrderRepository {
   OrderRepositoryImpl({
@@ -39,6 +40,14 @@ class OrderRepositoryImpl implements OrderRepository {
       customerNotes: _clip(customerNotes),
       products: items.map(OrderProductModel.fromEntity).toList(),
       card: CardModel.fromEntity(card),
+      // Same cycle as Self Order `kiosk_kds_message`: client builds the wire,
+      // backend relays it on Pusher as `record.pat_kds_message` (rewriting the
+      // provisional ticket # when known).
+      patKdsMessage: PatKdsMessage.build(
+        orderNumber: PatKdsMessage.provisionalOrderNumber,
+        orderId: clientOrderId,
+        items: items,
+      ),
     );
     final response = await _policy.run<OrderResponse>(
       remote: () => _api.placeOrder(request),

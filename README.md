@@ -143,6 +143,24 @@ default value.
 > success screen shows the server's `subtotal_price`, `total_taxes` and
 > `total_price`.
 
+### Kitchen fan-out (Cashier Pusher)
+
+Same cycle as Self Order: this app builds a Multipeer kitchen string
+(`pat_kds_message`) and sends it on `POST /public/pay-at-table/orders`. The
+**backend** broadcasts it to the branch Cashier on the Pay-at-Table channel;
+Cashier maps the payload into OrderHistory, shows a **Pay at Table** alert,
+and fans the wire out to KDS.
+
+| | Value |
+| --- | --- |
+| Channel | `pay-at-table-orders.{deviceCode}` |
+| Event | `pay-at-table-order` |
+| `deviceCode` | Cashier `DeviceIdDeviceId` for that branch |
+| Kitchen wire | `record.pat_kds_message` (fallback: `kiosk_kds_message`) |
+
+The Flutter client does **not** subscribe to this channel — reception is
+Cashier-only. See `lib/core/config/cashier_pusher_contract.dart`.
+
 ---
 
 ## Demo data
