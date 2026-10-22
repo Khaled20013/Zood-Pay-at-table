@@ -194,7 +194,7 @@ lib/
 │   ├── localization/    # LocaleCubit, l10n helpers (error texts)
 │   ├── network/         # DioClient, ApiEndpoints, DemoDataPolicy, localized names
 │   ├── routing/         # AppRouter, DeepLinkService
-│   ├── theme/           # AppColors (brand blue #1F4EE5), AppTheme (Cairo font)
+│   ├── theme/           # AppColors (Teams blue #004FEE), AppTheme (Cairo font)
 │   ├── utils/           # CurrencyFormatter, Uuid
 │   └── widgets/         # buttons, steppers, status views, responsive helpers
 ├── features/

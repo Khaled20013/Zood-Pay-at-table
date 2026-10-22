@@ -6,6 +6,7 @@ import '../../../../core/localization/l10n.dart';
 import '../../../../core/theme/app_colors.dart';
 
 /// Full-screen loader while the QR session resolves.
+/// Table badge with concentric circles expanding outward.
 class FindingTableLoader extends StatefulWidget {
   const FindingTableLoader({super.key, this.message});
 
@@ -51,8 +52,9 @@ class _FindingTableLoaderState extends State<FindingTableLoader>
     final l10n = context.l10n;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final baseMessage = widget.message ?? l10n.findingTable;
-    // Drop trailing ellipsis; animated dots replace it.
     final label = baseMessage.replaceFirst(RegExp(r'[.…]+$'), '').trimRight();
+
+    const badge = _TableBadge(scale: 1);
 
     return ColoredBox(
       color: AppColors.background,
@@ -64,34 +66,34 @@ class _FindingTableLoaderState extends State<FindingTableLoader>
               mainAxisSize: MainAxisSize.min,
               children: [
                 SizedBox.square(
-                  dimension: 168,
+                  dimension: 200,
                   child: reduceMotion
-                      ? const _TableBadge(scale: 1)
+                      ? badge
                       : AnimatedBuilder(
                           animation: Listenable.merge([_pulse, _float]),
-                          builder: (context, _) {
+                          builder: (context, child) {
                             final float = Curves.easeInOut.transform(
                               _float.value,
                             );
                             return Stack(
                               alignment: Alignment.center,
                               children: [
-                                for (var i = 0; i < 3; i++)
+                                for (var i = 0; i < 4; i++)
                                   _PulseRing(
-                                    progress: (_pulse.value + i / 3) % 1,
-                                    color: i.isEven
-                                        ? AppColors.primary
-                                        : AppColors.accent,
+                                    progress: (_pulse.value + i / 4) % 1,
+                                    filled: i.isOdd,
                                   ),
                                 Transform.translate(
                                   offset: Offset(0, -6 + 12 * float),
-                                  child: _TableBadge(
+                                  child: Transform.scale(
                                     scale: 0.96 + 0.04 * float,
+                                    child: child,
                                   ),
                                 ),
                               ],
                             );
                           },
+                          child: badge,
                         ),
                 ),
                 const SizedBox(height: 28),
@@ -118,25 +120,30 @@ class _FindingTableLoaderState extends State<FindingTableLoader>
 }
 
 class _PulseRing extends StatelessWidget {
-  const _PulseRing({required this.progress, required this.color});
+  const _PulseRing({required this.progress, required this.filled});
 
   final double progress;
-  final Color color;
+  final bool filled;
 
   @override
   Widget build(BuildContext context) {
     final t = Curves.easeOut.transform(progress);
-    final size = 72 + 88 * t;
-    final opacity = (1 - t) * 0.28;
+    final size = 72 + 110 * t;
+    final opacity = (1 - t) * (filled ? 0.18 : 0.42);
     return Container(
       width: size,
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(
-          color: color.withValues(alpha: opacity),
-          width: 1.6,
-        ),
+        color: filled
+            ? AppColors.primary.withValues(alpha: opacity)
+            : Colors.transparent,
+        border: filled
+            ? null
+            : Border.all(
+                color: AppColors.primaryBright.withValues(alpha: opacity),
+                width: 2.2,
+              ),
       ),
     );
   }
@@ -159,7 +166,7 @@ class _TableBadge extends StatelessWidget {
           gradient: AppColors.ctaGradient,
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.28),
+              color: AppColors.primary.withValues(alpha: 0.32),
               blurRadius: 22,
               offset: const Offset(0, 10),
             ),

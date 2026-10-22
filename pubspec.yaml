@@ -140,5 +140,5 @@ flutter_launcher_icons:
   web:
     generate: true
     image_path: "assets/images/zood_mark.png"
-    background_color: "#0B1E66"
-    theme_color: "#1F4EE5"
+    background_color: "#0039C7"
+    theme_color: "#004FEE"

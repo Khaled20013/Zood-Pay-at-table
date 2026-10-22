@@ -1,0 +1,49 @@
+---
+description: Zood Pay at Table visual identity — Teams/Dot-Ai blue (#004FEE) + Cairo
+alwaysApply: true
+---
+
+# Zood design identity (Pay at Table)
+
+Source of truth for humans: `docs/ZOOD_DESIGN_SYSTEM.md`  
+Visual reference: Teams / Dot-Ai (`AppColors.primary`). Same brand as Self Order.
+
+## Brand
+
+- Primary / CTA: `#004FEE`
+- Primary dark: `#0039C7` · bright: `#4C7AF5` · disabled: `#82A9F8`
+- Soft primary: `#E7EDFB`
+- Font: `Cairo` only (`AppTheme.fontFamily`)
+- Light mode only
+
+## Semantic & surfaces
+
+- Success: `#0F9F8A` (border accent `#1BDAC0`)
+- Error: `#C01148`
+- Ink: `#1C2434` · muted `#4D5F73` · subtle `#9B9B9B`
+- Background: `#F5F7FA` · surface `#FFFFFF` · surfaceMuted `#EEF2FA` · border `#F2F2F2`
+- Page gradient: `#EEF2FA` → `#F5F7FD` → `#EDF0F8`
+- CTA / hero gradients: blue family only (`#0039C7` / `#004FEE` / `#4C7AF5`)
+
+## Do not
+
+- Keep legacy PAT blue `#1B3FDB` or orange accent `#E8892C` as brand
+- Keep cream shell `#F4F1EB` / `#FFFCF8` as brand surfaces
+- Swap Cairo for Inter / Noto Kufi / system fonts on customer screens
+- Use sub-brand accents unless explicitly requested:
+  - IM pink `#FA6A99`
+  - Teams wordmark purple `#7048C0`
+  - Dot-Ai kiosk sky `#78CBEF` / pink button `#FF608F`
+- Invent purple / red / orange brand gradients (`warmGradient` must not be orange)
+
+## UI patterns
+
+- Primary button: fill `#004FEE` or `ctaGradient`, white label; disabled `#82A9F8`
+- Secondary: soft primary or surface muted, label `#004FEE`
+- Cards: white, light border, soft shadow; elevation 0 preferred
+- Inputs: radius from `AppTheme` (10 / 16 / 24), focus with primary
+- Weights: `w700` titles, `w400` / `w600` body
+
+## When changing colors
+
+Update `lib/core/theme/app_colors.dart` (and web/Android theme_color if present). Do not reintroduce the old cream/orange PAT palette as brand.

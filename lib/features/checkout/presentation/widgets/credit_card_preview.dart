@@ -86,9 +86,9 @@ class CreditCardPreview extends StatelessWidget {
 
 List<Color> _gradientFor(CardBrand brand) => switch (brand) {
   CardBrand.visa => const [
-    Color(0xFF0F1A5C),
-    Color(0xFF1F4EE5),
-    Color(0xFF4A7BFF),
+    Color(0xFF0C1B4A),
+    Color(0xFF004FEE),
+    Color(0xFF4C7AF5),
   ],
   CardBrand.mastercard => const [
     Color(0xFF16161A),
@@ -106,9 +106,9 @@ List<Color> _gradientFor(CardBrand brand) => switch (brand) {
     Color(0xFF3BB4E0),
   ],
   CardBrand.unknown => const [
-    Color(0xFF0B1E66),
-    Color(0xFF1A3FC4),
-    Color(0xFF3D6DFF),
+    Color(0xFF0C1B4A),
+    Color(0xFF0039C7),
+    Color(0xFF4C7AF5),
   ],
 };
 

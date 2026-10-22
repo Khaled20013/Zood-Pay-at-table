@@ -9,11 +9,11 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/language_toggle.dart';
-import '../../../../core/widgets/loading_indicator.dart';
 import '../../domain/entities/table_session.dart';
 import '../../../cart/presentation/cubit/cart_cubit.dart';
 import '../../../menu/presentation/cubit/menu_cubit.dart';
 import '../cubit/table_session_cubit.dart';
+import '../widgets/finding_table_loader.dart';
 import '../widgets/table_session_gate.dart';
 
 /// `/pay-at-table/:qrId`: resolves the QR and welcomes the guest to their
@@ -74,7 +74,7 @@ class _TableScanScreenState extends State<TableScanScreen> {
                   key: const ValueKey('failure'),
                   error: state.error,
                 ),
-                _ => const _ScanSkeleton(key: ValueKey('loading')),
+                _ => const FindingTableLoader(key: ValueKey('loading')),
               },
             );
           },
@@ -450,106 +450,6 @@ class _PaymentBadges extends StatelessWidget {
           badge('VISA'),
           badge('Mastercard'),
         ],
-      ),
-    );
-  }
-}
-
-class _ScanSkeleton extends StatelessWidget {
-  const _ScanSkeleton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: Column(
-            children: [
-              Container(
-                constraints: const BoxConstraints(minHeight: 300),
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  gradient: AppColors.heroGradient,
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(32),
-                  ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 70),
-                        Opacity(
-                          opacity: 0.35,
-                          child: ShimmerScope(
-                            child: const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SkeletonBox(width: 90, height: 14),
-                                SizedBox(height: 12),
-                                SkeletonBox(width: 230, height: 30),
-                                SizedBox(height: 18),
-                                Row(
-                                  children: [
-                                    SkeletonBox(
-                                      width: 90,
-                                      height: 30,
-                                      radius: 30,
-                                    ),
-                                    SizedBox(width: 8),
-                                    SkeletonBox(
-                                      width: 100,
-                                      height: 30,
-                                      radius: 30,
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        Row(
-                          children: [
-                            const SizedBox.square(
-                              dimension: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              context.l10n.findingTable,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(color: Colors.white),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: ShimmerScope(
-                  child: Container(
-                    height: 320,
-                    decoration: BoxDecoration(
-                      color: AppColors.shimmerBase,
-                      borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
