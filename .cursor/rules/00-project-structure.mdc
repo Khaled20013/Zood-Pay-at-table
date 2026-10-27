@@ -1,0 +1,89 @@
+---
+description: Flutter project folder structure, layering, naming, and new-project setup
+alwaysApply: true
+---
+
+# Project Structure
+
+The app is organized **by layer at the top, by feature inside each layer**.
+There is no `features/` folder, no domain/use-case layer, no repositories, no DI container.
+
+```
+lib/
+  main.dart            # app entry, MultiBlocProvider, routerMain, app-wide globals
+  Constants.dart       # app-wide constants (lang, keys)
+  AppRoutes/           # GoRouterApp.dart + AppRoutes.dart + one <Feature>Routes.dart per feature
+  Bloc/                # ONLY app-wide cubits (AppCubit, LanguageCubit) + states.dart
+  Screens/<Feature>/   # UI + screen logic (Controller + View)        → feature-screen-pattern.mdc
+  Models/<Feature>/    # data: <X>Model.dart, <X>Api.dart [, <X>FilterModel.dart] → models-and-api.mdc
+  Widgets/             # shared, presentational, feature-agnostic widgets
+  Components/          # shared multi-file UI blocks with their own Controller/View (dialogs, pickers)
+  Helper/
+    ApiServices/       # ApiBase, ApiRequest, KApiResponse
+    connection/        # http client (+ optional local cache)
+    Configs/           # base url / env config (kcore.dart)
+  Styles/              # theme, colors, sizes
+  l10n/ + generated/   # translations, always accessed via S.of(context)
+  _TempScreen/         # template copied to start every new screen
+test/                  # mirrors lib/ → testing.mdc
+```
+
+`<Feature>` is a placeholder for your feature name (`Orders`, `Profile`, `Menu`...).
+`<your_package>` is the `name:` in your `pubspec.yaml`.
+
+## Layer rules
+
+- `Screens` may import `Models`, `Widgets`, `Components`, `Helper`, `AppRoutes`, `Bloc`.
+- `Models` may import only `Helper` (never `Screens`, `Widgets`, `AppRoutes`, or Flutter widgets).
+- `Widgets` are stateless/presentational and feature-agnostic (no `<X>Api`, no `AppCubit`).
+- Views never call `ApiBase` or `<X>Api`. Flow is always: View → Controller (or AppCubit) → `<X>Api`.
+
+## Naming
+
+- Folders and files: `PascalCase` (`OrdersScreen/`, `OrdersController.dart`).
+  Add `file_names: false` under `linter: rules:` in `analysis_options.yaml`.
+- One feature name used everywhere: `Orders` → `Screens/Orders`, `Models/Orders`, `AppRoutes/OrdersRoutes.dart`.
+- Spell names correctly (`Components`, `FilterModel`); never copy typos from older code.
+- Never name a class after a Flutter/Material class (`MenuController`, `Dialog`, `Router`, `Page`,
+  `Notification`, `Action`...). Prefix with the screen: `MenuScreenController`.
+
+## New project setup
+
+`reference/lib/` (next to these rules) holds real source files with their original paths.
+Every file there is one of three kinds:
+
+| Kind | What to do |
+|---|---|
+| **Core** | Copy into every project (list below) |
+| **Optional module** | Copy only if the app needs it → `optional-modules.mdc` |
+| **Example** | Read to learn the pattern; never copy (`Customers`, `Users`, `Branches`) |
+
+1. **Copy the core** into `lib/`:
+   `Helper/ApiServices/{Apis/ApiBase.dart, Base/ApiRequest.dart, Base/KApiResponse.dart}`,
+   `Helper/connection/{http_client.dart, api_exception.dart}`, `Helper/Configs/kcore.dart`,
+   `Helper/path_selector_base.dart`, `Helper/kPrint.dart`, `Constants.dart`, `Models/CoreBaseModel.dart`,
+   `AppRoutes/{GoRouterApp.dart, AppRoutes.dart}`, `AppRoutes/Base/MyNavObserver.dart`,
+   `Bloc/{AppCubit.dart, LanguageCubit.dart, observer_bloc.dart, states.dart}`, `_TempScreen/`.
+2. **Rename the package** in every import: `package:zood_lite/` → `package:<your_package>/`
+   (or use relative imports).
+3. **Strip the source app**: remove every reference to features the new app doesn't have
+   (auth, cart, orders, roles, branches...) from `GoRouterApp`, `AppRoutes`, `AppCubit`, `states.dart`,
+   `main.dart`, `ApiBase`. Keep `AppCubit` empty until a real app-wide need appears.
+4. **Configure**: base url in `Configs/kcore.dart`; headers in `ApiBase.getHeader()`.
+5. **Pick optional modules** (auth, cache, pagination, uploads, deep links, demo data) → `optional-modules.mdc`.
+6. **Packages** (core): `go_router`, `flutter_bloc`, `bloc`, `http`, `shared_preferences`, `logger`.
+   Dev: `flutter_test`, `bloc_test` (optional). Add others only with their optional module.
+7. **Localization**: either `intl_utils` or Flutter `gen-l10n`; in both cases the generated class is `S`
+   (`gen-l10n`: set `output-class: S`, `output-dir: lib/generated` in `l10n.yaml`).
+8. Verify with the Definition of done below before building features.
+
+Migrating an existing app (e.g. Clean Architecture / `features/`) → `migration-from-clean.mdc`.
+
+## Definition of done (every change)
+
+- `flutter analyze` is clean.
+- `flutter test` passes; new logic has tests (→ `testing.mdc`).
+- No raw `context.go/push('/...')`; navigation only through `<Feature>Routes.open...()`.
+- No `<X>Api` / `ApiBase` calls from a View or Widget.
+- No hardcoded user-facing strings; all via `S.of(context)`.
+- No new per-screen/per-feature Cubit.

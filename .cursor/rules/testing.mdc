@@ -1,0 +1,55 @@
+---
+description: Test layout and how to test Models/Api, Controllers, AppCubit, and Views in this architecture
+globs: test/**
+alwaysApply: false
+---
+
+# Testing
+
+## Layout
+
+`test/` mirrors `lib/`. File names are `snake_case_test.dart`.
+
+```
+test/
+  helpers/
+    mock_http.dart      # MockApi: installs a MockClient into HttpClientHelper.clientFactory
+    test_app.dart       # pumpTestApp(): MaterialApp.router + cubits + l10n + routerMain
+    fixtures.dart       # sample JSON + ready-made models
+  Bloc/                 # app_cubit_test.dart, language_cubit_test.dart
+  Models/<Feature>/     # <x>_model_test.dart, <x>_api_test.dart
+  Screens/<Feature>/    # <screen>_controller_test.dart, <screen>_test.dart (widget)
+  Widgets/
+  AppRoutes/
+```
+
+## Network
+
+- Never hit the real network. Replace the client:
+
+```dart
+setUp(() => HttpClientHelper.clientFactory = () => MockClient((req) async {
+      if (req.url.path.endsWith('/orders')) return http.Response(jsonEncode(ordersJson), 200);
+      return http.Response('{"message":"not found"}', 404);
+    }));
+tearDown(() => HttpClientHelper.clientFactory = http.Client.new);
+```
+
+- Turn caching off in tests (`enableCash = false` / no `returnCaching`) and reset `SharedPreferences.setMockInitialValues({})`.
+
+## What to test
+
+| Layer | Test |
+|---|---|
+| Model | `fromJson` with full, partial, and wrong-typed JSON; `toJson` round trip; calculations |
+| Api | correct url/method/body sent; success parses into `response.data`; 4xx/5xx/no-connection → `success == false` |
+| Controller | inject fake Api functions/callbacks; assert fields after `onInit()`/actions; no widgets needed |
+| AppCubit | emitted states and field values (`bloc_test` or `stream` + `expectLater`) |
+| View | `pumpTestApp` + `MockClient`; loading → data, error → retry, empty state; one test per screen minimum |
+
+## Rules
+
+- Controllers/cubits take dependencies as constructor parameters with real defaults so tests pass fakes.
+- Widget tests use `pumpTestApp` so `S.of(context)`, cubits, and `routerMain` exist.
+- Use `pumpAndSettle` only when there are no infinite animations; otherwise `pump(duration)`.
+- Reset globals (`routerMain`, `clientFactory`, prefs) in `tearDown`.

@@ -1,0 +1,61 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:zood_pay_at_table/Helper/Errors/AppException.dart';
+import 'package:zood_pay_at_table/Helper/L10n.dart';
+import 'package:zood_pay_at_table/Screens/TableSession/QrScanScreen/View/QrScanScreen.dart';
+import 'package:zood_pay_at_table/main.dart';
+import 'package:zood_pay_at_table/Screens/TableSession/Widgets/TableSessionGate.dart';
+
+void main() {
+  Future<void> pump(WidgetTester tester, AppException error) {
+    routerMain = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => Scaffold(body: TableErrorView(error: error)),
+        ),
+        GoRoute(
+          name: QrScanScreen.routeName,
+          path: QrScanScreen.path,
+          builder: (_, _) => const Text('scanner'),
+        ),
+      ],
+    );
+    addTearDown(routerMain.dispose);
+    return tester.pumpWidget(
+      MaterialApp.router(
+        locale: const Locale('en'),
+        supportedLocales: S.supportedLocales,
+        localizationsDelegates: const [
+          S.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        routerConfig: routerMain,
+      ),
+    );
+  }
+
+  testWidgets('a QR that does not exist offers scanning again', (
+    tester,
+  ) async {
+    await pump(tester, const QrNotFoundException());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Try again'), findsNothing);
+    await tester.tap(find.text('Scan again'));
+    await tester.pumpAndSettle();
+    expect(find.text('scanner'), findsOneWidget);
+  });
+
+  testWidgets('a network error still offers retry', (tester) async {
+    await pump(tester, const NetworkException());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Try again'), findsOneWidget);
+    expect(find.text('Scan again'), findsNothing);
+  });
+}

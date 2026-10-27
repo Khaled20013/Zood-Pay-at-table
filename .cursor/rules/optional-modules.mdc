@@ -1,0 +1,53 @@
+---
+description: Optional modules from reference/lib (auth, cache, pagination, uploads, deep links, demo data) — copy only when needed
+alwaysApply: false
+---
+
+# Optional modules
+
+Copy a module only when the app needs it. When you skip one, also delete its references
+from `ApiBase`, `http_client.dart`, `main.dart`, `GoRouterApp`, and `pubspec.yaml`.
+
+## Auth (login, token, 401 re-login)
+
+- Files: `reference/lib/Models/User/UserAuthModel.dart` (adapt to your backend), auth branch in
+  `ApiBase.requestApi` (`skipAuth`), token in `ApiBase.getHeader()`, 401 handling in `http_client.dart`.
+- Routes: login screen in `AppRoutes.dart`; splash decides login vs home.
+- Session globals (settings, current branch...) loaded once after login, cleared on logout (`state-and-cubit.mdc`).
+- Without auth: remove `UserAuthModel`, `skipAuth`, the auth header, and the 401 branch.
+
+## Local cache
+
+- Files: `Helper/connection/cash/` (`CashLocal`, `model/`), cache flags in `ApiRequest`.
+- Package: `shared_preferences`.
+- Use for read-mostly lists that should show instantly. Never cache writes or user-private data on shared devices.
+- Without cache: keep the `ApiRequest` flags at `false`; the cache folder can stay unused or be removed.
+
+## Pagination / infinite lists
+
+- Files: `Widgets/LoadingListView/` (`LoadingListView`, `LoadingListController`, `ShimmerList`), `<Feature>FilterModel`.
+- Packages: `shimmer`.
+- Controller pattern: `loadMore()` → if `!loading && hasMoreItems` then `filter.page++` and fetch; append results.
+
+## File uploads
+
+- Files: `Helper/ApiServices/Base/FileUpload.dart`, `ApiBase.uploadFile`, `RequestType.upload`.
+- Packages: `http_parser`, `path` (+ `image_picker`/`file_picker` as needed).
+- Not supported on web without changes (uses `dart:io` `File`).
+
+## Deep links / share links
+
+- Files: `AppRoutes/Base/DeepLinkingRoutes.dart` (or a `DeepLinkService` that maps an incoming URI to a route).
+- Every deep-linkable screen must load from path parameters alone (`routing.mdc`).
+- Platform setup: Android intent filters / iOS associated domains / web URL strategy.
+
+## Demo / dummy data
+
+- Pattern: a `Dummy<Feature>Data.dart` next to the model + a policy that returns dummy data when a
+  flag is on or the request fails in debug.
+- Must be off in release builds; never mix dummy data into a successful real response.
+
+## Helpers you may drop
+
+`Helper/Map+ext.dart`, `Helper/ApiServices/Api.dart`, `Helper/ApiServices/Apis/ApiStatus.dart`,
+`nb_utils`, `rxdart`, `logging` — keep only if code actually uses them.

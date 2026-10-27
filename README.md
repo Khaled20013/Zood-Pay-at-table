@@ -84,13 +84,13 @@ Or launch the app and tap **Open demo table**.
 ## Configuration
 
 Compile-time flags (`--dart-define`), defined in
-[`lib/core/config/app_config.dart`](lib/core/config/app_config.dart):
+[`lib/Helper/Configs/AppConfig.dart`](lib/Helper/Configs/AppConfig.dart):
 
 | Key | Default | Purpose |
 | --- | --- | --- |
 | `USE_DUMMY_DATA` | `true` | Serve bundled demo data instead of calling the API |
 | `API_BASE_URL` | release: `https://api.zood.ai/api/v1/`<br>debug: `https://dev.api.zood.ai/api/v1/` | Pay at Table API |
-| `ENABLE_NETWORK_LOGS` | `true` | `pretty_dio_logger` in debug builds (request bodies are never logged) |
+| `ENABLE_NETWORK_LOGS` | `true` | Request / response logs in debug builds (card data is masked) |
 | `INITIAL_LOCATION` | empty | Route to open on launch instead of splash → landing |
 
 Run against the real API:
@@ -159,13 +159,13 @@ and fans the wire out to KDS.
 | Kitchen wire | `record.pat_kds_message` (fallback: `kiosk_kds_message`) |
 
 The Flutter client does **not** subscribe to this channel — reception is
-Cashier-only. See `lib/core/config/cashier_pusher_contract.dart`.
+Cashier-only. See `lib/Helper/Configs/CashierPusherContract.dart`.
 
 ---
 
 ## Demo data
 
-While `USE_DUMMY_DATA=true` (the default), the repositories return bundled JSON
+While `USE_DUMMY_DATA=true` (the default), the `*Api` classes return bundled JSON
 in the **exact API shape**, parsed by the same models as real responses. It
 covers every modifier rule.
 
@@ -181,52 +181,51 @@ covers every modifier rule.
 
 ## Architecture
 
-Feature-first Clean Architecture: `flutter_bloc` cubits, `get_it` for
-dependency injection, `go_router` for navigation, Retrofit + `json_serializable`
-for the API.
+Layered structure from the team architecture rules (see `.cursor/rules/`):
+`flutter_bloc` for app-wide state only, plain controllers per screen,
+`go_router` for navigation and static `*Api` classes over `package:http`.
 
 ```
 lib/
-├── main.dart · app.dart · injection_container.dart
-├── core/
-│   ├── config/          # AppConfig (dart-defines, link host, VAT, currency)
-│   ├── error/           # AppException hierarchy (QrNotFound, CardDeclined, …)
-│   ├── localization/    # LocaleCubit, l10n helpers (error texts)
-│   ├── network/         # DioClient, ApiEndpoints, DemoDataPolicy, localized names
-│   ├── routing/         # AppRouter, DeepLinkService
-│   ├── theme/           # AppColors (Teams blue #004FEE), AppTheme (Cairo font)
-│   ├── utils/           # CurrencyFormatter, Uuid
-│   └── widgets/         # buttons, steppers, status views, responsive helpers
-├── features/
-│   ├── onboarding/      # splash, landing, welcome
-│   ├── table_session/   # QR check (3.1), table header, session gate
-│   ├── menu/            # categories/products/modifiers (3.2–3.4), ModifierSelection, product sheet
-│   ├── cart/            # CartCubit, cart lines, cart sheet
-│   └── checkout/        # card form, CheckoutCubit, OrderRepository (3.5), success screen
-└── l10n/                # app_en.arb · app_ar.arb (+ generated localizations)
-```
-
-Each data feature follows the same layering:
-
-```
-data/        datasources (Retrofit API + dummy JSON) · models (*.g.dart) · repository impl
-domain/      entities · repository interfaces
-presentation/ cubit + state · screens · widgets
+├── main.dart            # MyApp, MultiBlocProvider, global routerMain
+├── Constants.dart       # current language, app version
+├── AppRoutes/           # GoRouterApp + one <Feature>Routes.dart per feature, DeepLinkService
+├── Bloc/                # AppCubit (session, menu, cart) · LanguageCubit · states.dart
+├── Screens/<Feature>/<Screen>/
+│   ├── Controller/      # plain class, refresh() → setState
+│   └── View/            # widget with routeName / path
+├── Models/<Feature>/    # immutable *Model classes, *Api (Future<KApiResponse>), dummy data
+├── Helper/
+│   ├── ApiServices/     # ApiBase, ApiRequest, KApiResponse, ApiEndpoints, DemoDataPolicy
+│   ├── connection/      # HttpClientHelper (http), local cache
+│   ├── Configs/         # AppConfig (dart-defines), kcore Config (base url)
+│   ├── Errors/          # AppException hierarchy (QrNotFound, CardDeclined, …)
+│   └── L10n.dart        # S + error / category text helpers
+├── Styles/              # AppColors (Teams blue #004FEE), AppTheme (Cairo font)
+├── Widgets/             # shared buttons, steppers, status views
+├── generated/           # S (flutter gen-l10n output)
+└── l10n/                # app_en.arb · app_ar.arb
 ```
 
 Key points:
 
-- `TableSessionCubit`, `MenuCubit` and `CartCubit` are app-scoped, so the cart
-  survives navigation. Scanning a different table starts a fresh cart.
+- `AppCubit` is app-scoped, so the cart survives navigation. Resolving a
+  table binds the cart to it (a different table starts a fresh cart) and
+  warms the menu. Views rebuild on `TableSessionAppStates`, `MenuAppStates`
+  or `CartAppStates`.
+- Views never call `context.go` with raw strings; they use
+  `<Feature>Routes.open<Screen>Screen(...)`.
 - `TableSessionGate` resolves the QR on any nested route, so links straight to
   `/menu` or `/cart` work.
 - `DemoDataPolicy` decides between API and demo data and maps HTTP statuses to
-  typed `AppException`s per endpoint.
+  typed `AppException`s per endpoint (`KApiResponse.error`).
 - `ModifierSelection` is an immutable model that enforces min / max / unique /
   free / default rules and prices one product unit.
+- `CartSummaryController` keeps the same `client_order_id` across retries of
+  an unchanged order, so the server never charges twice.
 
-Generated files (`*.g.dart`, `lib/l10n/app_localizations*.dart`) are committed,
-so a fresh checkout builds without code generation.
+Generated localizations (`lib/generated/`) are committed, so a fresh checkout
+builds without code generation.
 
 ---
 
@@ -281,9 +280,8 @@ routes to `index.html` and serves `/.well-known/*` as JSON.
 ```sh
 flutter analyze
 flutter test
-dart run build_runner build   # after changing models or Retrofit APIs
 ```
 
-Tests cover the modifier rules, cart pricing, QR / menu / order status mapping
-against a fake HTTP adapter, the `client_order_id` retry rules, card validation,
+Tests mirror `lib/` and cover the modifier rules, cart pricing, QR / menu /
+order status mapping against a mock `http` client, the `client_order_id` retry rules, card validation,
 and layout of the main screens on small phones in both languages.

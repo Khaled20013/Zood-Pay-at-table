@@ -1,0 +1,44 @@
+---
+description: Step-by-step migration of an existing app (Clean Architecture / features/ / per-feature cubits) into this layered architecture
+alwaysApply: false
+---
+
+# Migrating an existing app
+
+Use when converting an app built with `features/<x>/{data,domain,presentation}`, repositories,
+`get_it`, `dio`/`retrofit`, or a Cubit per feature.
+
+## Mapping
+
+| Old | New |
+|---|---|
+| `features/x/domain/entities/*` + `data/models/*` (+ `*.g.dart`, `freezed`) | `Models/X/<X>Model.dart` (hand-written `fromJson`) |
+| `data/datasources/*` + `repositories/*` (+ `domain/repositories`) | `Models/X/<X>Api.dart` static methods |
+| `usecases/*` | method on `<X>Api` or the Controller |
+| `presentation/cubit/x_cubit.dart` used by one screen | `Screens/X/<Screen>/Controller/<Screen>Controller.dart` |
+| cubit shared across screens (cart, session, auth) | fields + methods on `AppCubit`, state in `states.dart` |
+| `presentation/pages/*` | `Screens/X/<Screen>/View/<Screen>.dart` |
+| `presentation/widgets/*` | `Screens/X/Widgets/` (or `Widgets/` if feature-agnostic) |
+| `get_it` / `injection_container.dart` | removed; static Api classes + constructor defaults |
+| `dio` / `retrofit` / interceptors | `ApiBase` + `HttpClientHelper` (`http`); logging in `kPrint` |
+| `app_router.dart` / `routes.dart` | `AppRoutes/<Feature>Routes.dart` + `GoRouterApp` |
+| `l10n/app_localizations.dart` (`AppLocalizations.of`) | `generated/` with class `S` (`S.of(context)`) |
+| `Either<Failure, T>` | `KApiResponse` (`success`, `data`, `error`) |
+
+## Order of work
+
+1. Branch (`refactor/layered-architecture`). Make sure `flutter test` is green first.
+2. Copy the core (`00-project-structure.mdc` → New project setup), fix imports, get `flutter analyze` clean
+   with old code still present.
+3. Migrate per feature, bottom-up: Model → Api (+ api tests) → AppCubit/Controller (+ tests) → View → Routes.
+4. After each feature: delete its old `features/x/` folder and old tests; analyze + test.
+5. Remove `get_it`, `dio`, `retrofit`, `freezed`, `json_serializable`, `build_runner` when unused.
+6. Rename l10n to `S`, update `l10n.yaml`, replace `AppLocalizations.of` everywhere.
+7. Update README architecture section and the project's `.cursor/rules/`.
+
+## Pitfalls
+
+- Name clashes with Flutter classes after flattening (`MenuController`) → `<Screen>ScreenController`.
+- Old cubits often hid navigation side effects; move them to Controller callbacks injected via the View.
+- Keep behavior identical first; redesign after the migration is green.
+- Don't rename public JSON keys while moving models.

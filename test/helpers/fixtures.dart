@@ -1,9 +1,9 @@
-import 'package:zood_pay_at_table/features/menu/domain/entities/product.dart';
-import 'package:zood_pay_at_table/features/table_session/domain/entities/table_session.dart';
+import 'package:zood_pay_at_table/Models/Menu/ProductModel.dart';
+import 'package:zood_pay_at_table/Models/TableSession/TableSessionModel.dart';
 
 const demoQrId = '40de86d3987ef0a98768ad61';
 
-const tableSession = TableSession(
+const tableSession = TableSessionModel(
   qrId: demoQrId,
   businessReference: '100245',
   branchId: 'br_olaya',
@@ -13,11 +13,11 @@ const tableSession = TableSession(
   currency: 'SAR',
 );
 
-const small = ModifierOption(id: 'opt_small', name: 'Small', price: 0);
-const large = ModifierOption(id: 'opt_large', name: 'Large', price: 5);
+const small = ModifierOptionModel(id: 'opt_small', name: 'Small', price: 0);
+const large = ModifierOptionModel(id: 'opt_large', name: 'Large', price: 5);
 
 /// Required single choice, defaults to Small.
-const sizeModifier = ProductModifier(
+const sizeModifier = ProductModifierModel(
   modifierId: 'mod_size',
   name: 'Size',
   options: [small, large],
@@ -26,11 +26,11 @@ const sizeModifier = ProductModifier(
   defaultOptionIds: ['opt_small'],
 );
 
-const vanilla = ModifierOption(id: 'opt_vanilla', name: 'Vanilla', price: 2);
-const caramel = ModifierOption(id: 'opt_caramel', name: 'Caramel', price: 3);
+const vanilla = ModifierOptionModel(id: 'opt_vanilla', name: 'Vanilla', price: 2);
+const caramel = ModifierOptionModel(id: 'opt_caramel', name: 'Caramel', price: 3);
 
 /// Optional, up to 3 units, options can repeat, first unit free.
-const syrupModifier = ProductModifier(
+const syrupModifier = ProductModifierModel(
   modifierId: 'mod_syrup',
   name: 'Syrup',
   options: [vanilla, caramel],
@@ -39,15 +39,15 @@ const syrupModifier = ProductModifier(
   uniqueOptions: false,
 );
 
-const noSugar = ModifierOption(id: 'opt_no_sugar', name: 'No sugar', price: 0);
-const lessSugar = ModifierOption(
+const noSugar = ModifierOptionModel(id: 'opt_no_sugar', name: 'No sugar', price: 0);
+const lessSugar = ModifierOptionModel(
   id: 'opt_less_sugar',
   name: 'Less sugar',
   price: 0,
 );
 
 /// Required with no default: blocks quick add.
-const sugarModifier = ProductModifier(
+const sugarModifier = ProductModifierModel(
   modifierId: 'mod_sugar',
   name: 'Sugar',
   options: [noSugar, lessSugar],
@@ -55,7 +55,7 @@ const sugarModifier = ProductModifier(
   maximumOptions: 1,
 );
 
-const karakTea = Product(
+const karakTea = ProductModel(
   id: 'prd_karak_tea',
   name: 'Karak Tea',
   description: 'Spiced milk tea',
@@ -65,7 +65,7 @@ const karakTea = Product(
   modifiers: [sizeModifier, syrupModifier],
 );
 
-const mintLemonade = Product(
+const mintLemonade = ProductModel(
   id: 'prd_mint_lemonade',
   name: 'Mint Lemonade',
   description: 'Fresh lemons and mint',
@@ -75,7 +75,7 @@ const mintLemonade = Product(
   modifiers: [sugarModifier],
 );
 
-const icedSpanishLatte = Product(
+const icedSpanishLatte = ProductModel(
   id: 'prd_iced_spanish_latte',
   name: 'Iced Spanish Latte',
   description: 'Espresso, milk, condensed milk',
@@ -84,7 +84,7 @@ const icedSpanishLatte = Product(
   categoryId: 'cat_cold',
 );
 
-const soldOutCake = Product(
+const soldOutCake = ProductModel(
   id: 'prd_sold_out',
   name: 'Sold Out Cake',
   description: 'Not today',

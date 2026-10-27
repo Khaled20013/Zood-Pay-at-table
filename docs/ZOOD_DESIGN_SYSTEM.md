@@ -129,8 +129,8 @@ heroGradient:  ضمن عائلة الأزرق الغامق/الفاتح أعلا
 
 حدّث:
 
-- `lib/core/theme/app_colors.dart`
-- `lib/core/theme/app_theme.dart` (يتبع التوكنات تلقائياً إن بقيت الأسماء)
+- `lib/Styles/AppColors.dart`
+- `lib/Styles/AppTheme.dart` (يتبع التوكنات تلقائياً إن بقيت الأسماء)
 - `pubspec.yaml` / Android / web `theme_color` إن وُجدت قيم قديمة `#1F4EE5` / `#1B3FDB`
 
 ألوان placeholder للفئات (مشروبات/حلويات) تبقى تزيينية للمنتجات وليست brand.

@@ -1,0 +1,88 @@
+---
+description: go_router navigation via one <Feature>Routes class per feature with dual-mode open functions
+globs: lib/AppRoutes/**
+alwaysApply: false
+---
+
+# Routing (go_router)
+
+- `GoRouterApp.dart` builds the single `GoRouter` (`routerMain`, a global in `main.dart`) and exposes
+  `navigateTo(route:, arg:, replacement:, pathParameters:)`, `pop()`, `canPop()`.
+- `AppRoutes.dart` holds app-level routes (splash, not-found, and — if the app has them — login,
+  home shell/tab bar, webview) and decides where feature routes are attached.
+- Each feature has `AppRoutes/<Feature>Routes.dart` with:
+  - `static List<RouteBase> routes()` registering all its screens.
+  - one `open<Screen>Screen(...)` per screen.
+
+## Where feature routes live
+
+Pick one per app and stay consistent:
+
+- **Shell app** (tab bar / home): feature routes are children of the home route
+  (`AppRoutes.routes(subList)` nests `subList` under home).
+- **Flow app** (no shell, e.g. kiosk, QR flow, onboarding → checkout): feature routes are top level.
+- A screen that only makes sense inside a parent context (an item inside a session, a detail under a
+  list) is a child route of that parent and inherits its path parameters.
+
+## Dual-mode `open...` function
+
+The same function **declares** the route (when `settings` is passed) and **navigates** (when not):
+
+```dart
+class OrdersRoutes {
+  static List<RouteBase> routes() => [
+        openOrdersScreen(settings: const RouteSettings()),
+        openOrderDetailsScreen(settings: const RouteSettings()),
+      ];
+
+  static dynamic openOrderDetailsScreen({
+    RouteSettings? settings,
+    String? orderId,
+    OrderModel? order,
+    void Function(OrderModel)? onUpdate,
+  }) {
+    if (settings != null) {
+      return GoRoute(
+        name: OrderDetailsScreen.routeName,
+        path: OrderDetailsScreen.path, // e.g. 'orders/:orderId'
+        builder: (_, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return OrderDetailsScreen(
+            orderId: state.pathParameters['orderId']!,
+            order: extra?['order'],
+            onUpdate: extra?['onUpdate'],
+          );
+        },
+      );
+    }
+    return GoRouterApp.navigateTo(
+      route: OrderDetailsScreen.routeName,
+      replacement: false,
+      pathParameters: {'orderId': orderId!},
+      arg: {'order': order, 'onUpdate': onUpdate},
+    );
+  }
+}
+```
+
+## Path parameters vs `extra`
+
+- **Path parameter** for anything that identifies the screen and must survive a refresh or deep link
+  (ids, codes, slugs). Required on web.
+- **`extra`** (a named `Map<String, dynamic>`) for in-memory conveniences: preloaded models, callbacks.
+  The screen must still work when `extra` is null (refresh, deep link) by loading from the path id.
+- When a screen declares a path, expose it as `static const String path` next to `routeName`.
+
+## `replacement`
+
+- `false` (push): the user can go back (details, add/edit forms).
+- `true` (go/replace): the previous screen must not come back (splash → home, login → home, payment → success).
+
+## Rules
+
+- Screens never call `context.go/push` with raw strings; always `<Feature>Routes.open...()`.
+- Route names come from `<Screen>.routeName`; never duplicate the string.
+- Register every new feature in `GoRouterApp.router()`: `subList.addAll(<Feature>Routes.routes());`
+  before `AppRoutes.routes(subList)`.
+- Unknown locations go to a not-found screen via `errorBuilder`, never a blank page.
+- Deep links / share links → `optional-modules.mdc`.

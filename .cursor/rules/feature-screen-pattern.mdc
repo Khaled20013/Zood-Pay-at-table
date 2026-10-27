@@ -1,0 +1,115 @@
+---
+description: How a feature and its screens are split (Controller + View with setState refresh, no per-screen Cubit)
+globs: lib/Screens/**,lib/Components/**,lib/_TempScreen/**
+alwaysApply: false
+---
+
+# Feature & Screen Pattern
+
+## Folder layout
+
+A feature is a folder under `lib/Screens/`. Each screen inside it has its own `Controller/` + `View/`.
+
+```
+Screens/Orders/
+  OrdersScreen/        Controller/OrdersController.dart        View/OrdersScreen.dart
+  OrderDetailsScreen/  Controller/OrderDetailsController.dart  View/OrderDetailsScreen.dart
+  Widgets/             # widgets shared only inside this feature
+```
+
+Small features with 1–2 screens may flatten: `Screens/Profile/{Controller,View,Widgets}/`.
+Purely visual screens with no state/logic (static info) may skip the Controller.
+
+## Controller (plain Dart class, NOT a Cubit)
+
+Holds all state + logic for one screen. Receives a `refresh` callback from the View.
+
+```dart
+class OrdersScreenController {
+  OrdersScreenController(this.refresh, {this.loadOrders = OrdersApi.getAll});
+
+  final void Function() refresh;
+  final Future<KApiResponse> Function({required OrdersFilterModel filter}) loadOrders;
+
+  final searchController = TextEditingController();
+  List<OrderModel> list = [];
+  bool loading = false;
+  bool _disposed = false;
+
+  void update() {
+    if (!_disposed) refresh();
+  }
+
+  Future<void> onInit() => getData();
+
+  Future<void> getData() async {
+    loading = true;
+    update();
+    final response = await loadOrders(filter: OrdersFilterModel());
+    if (_disposed) return;
+    if (response.success) list = response.data as List<OrderModel>;
+    loading = false;
+    update();
+  }
+
+  void dispose() {
+    _disposed = true;
+    searchController.dispose();
+  }
+}
+```
+
+- Dependencies that hit the network or navigate (Api functions, `open...` routes, `AppCubit`) are
+  constructor parameters with real defaults, so tests can replace them.
+- Every `await` is followed by a disposed/mounted check before touching state.
+- The Controller owns and disposes its `TextEditingController`s, `Timer`s, `StreamSubscription`s.
+  `AnimationController`s need a `TickerProvider`, so they stay in the View.
+
+## View (StatefulWidget)
+
+```dart
+class OrdersScreen extends StatefulWidget {
+  const OrdersScreen({super.key});
+  static const String routeName = '/OrdersScreen';
+  @override
+  State<OrdersScreen> createState() => _OrdersScreenState();
+}
+
+class _OrdersScreenState extends State<OrdersScreen> {
+  late final OrdersScreenController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = OrdersScreenController(refresh);
+    _controller.onInit();
+  }
+
+  void refresh() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => /* read only from _controller / AppCubit */;
+}
+```
+
+## Rules
+
+- Every screen has `static const String routeName` (and `static const String path` if its path differs).
+- Name the controller `<Screen>Controller`; if that collides with a Flutter class, use `<Screen>ScreenController`.
+- Views contain no API calls and no business math; they read `_controller.*` and call controller methods.
+- Controller mutates its fields then calls `update()`. Never call `setState` from the controller.
+- Every screen handles loading, error (with retry), and empty states explicitly.
+- Tab screens that must keep state use `AutomaticKeepAliveClientMixin`.
+- Paginated lists → `LoadingListView` (optional module, `optional-modules.mdc`).
+- Cross-screen results go back through callbacks (`onAdd`, `onUpdate`, `onDelete`) passed via the
+  Routes `open...` function; app-wide changes go through `AppCubit`.
+- User-facing strings come from `S.of(context)`; never hardcode UI text.
+- `Components/<Name>/` follow the same Controller + View split when they have state.

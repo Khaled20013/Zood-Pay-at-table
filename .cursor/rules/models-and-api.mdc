@@ -1,0 +1,94 @@
+---
+description: Data layer per feature (Model + static Api class [+ FilterModel]) on top of ApiBase / ApiRequest / KApiResponse
+globs: lib/Models/**,lib/Helper/ApiServices/**,lib/Helper/connection/**
+alwaysApply: false
+---
+
+# Models & API
+
+Reference: `reference/lib/Helper/ApiServices/`, `reference/lib/Helper/connection/`,
+`reference/lib/Models/Customers/` and `reference/lib/Models/Users/UsersApi.dart` (examples only).
+
+## Per-feature files
+
+```
+Models/Orders/
+  OrderModel.dart          # data class: fields + fromJson/fromList/toJson (+ pure calculations)
+  OrdersApi.dart           # static methods, one per endpoint
+  OrdersFilterModel.dart   # only for filtered/paged lists
+```
+
+No repositories, no use cases, no DI. Controllers / `AppCubit` call `<X>Api` static methods directly.
+
+## Networking stack (`Helper/`)
+
+- `ApiRequest` — `url`, `header`, `body`, `query`, `type` (get/post/put/delete/upload), cache flags, `cashKey`.
+- `ApiBase.requestAsync(request)` → `Future<KApiResponse>` — use this in new code.
+  `ApiBase.requestApi(request, onResult:)` is the callback form underneath.
+- `ApiBase().getHeader()` builds headers (auth token only if the app has auth).
+- `KApiResponse` — `statusCode`, `success`, `message`, `responseMap`, `responseList`, `data`, `isCashed`,
+  `getMessageList()`.
+- `HttpClientHelper` (`connection/http_client.dart`) — the only place that touches `package:http`.
+  `HttpClientHelper.clientFactory` is swapped in tests.
+- Base url comes from `Configs/kcore.dart`; never hardcode hosts in an Api class.
+- Web builds: no `dart:io` in Models/Helper code paths that run on web; keep headers minimal
+  (CORS-safelisted + `Content-Type` on writes).
+
+## Model
+
+Two allowed styles — pick one per project and stay consistent:
+
+| Style | When | Shape |
+|---|---|---|
+| **Mutable** (legacy/admin apps) | forms edit the model in place | `extends CoreBaseModel`, nullable fields, `getByType<T>(json?.select('key'))` |
+| **Immutable** (customer apps, new code) | read-mostly data, value equality | `const` constructor, `final` non-null fields with defaults, `copyWith` |
+
+Both styles:
+
+- `factory X.fromJson(Map<String, dynamic>? json)`, `static List<X> fromList(List? list)`, `toJson()`.
+- Parsing never throws on missing/wrong-typed keys; fall back to defaults.
+- `==`/`hashCode` on `id` (or all fields for value objects) when used in lists, sets, or selection.
+- Pure calculations (totals, tax, validation) are model methods/getters; they never mutate.
+- No Flutter imports except `foundation.dart` (`@immutable`, `listEquals`).
+
+## Api class (static, stateless)
+
+```dart
+class OrdersApi {
+  static Future<KApiResponse> getAll({required OrdersFilterModel filter}) async {
+    final request = ApiRequest()
+      ..url = '${config.url}/orders'
+      ..header = ApiBase().getHeader()
+      ..type = RequestType.get
+      ..query = filter.toJson()
+      ..isCaching = filter.enableCash
+      ..returnCaching = filter.enableCash
+      ..cashKey = 'orders_${filter.page}';
+
+    final response = await ApiBase.requestAsync(request);
+    if (response.success) {
+      response.data = OrderModel.fromList(response.responseMap?.select('data'));
+    }
+    return response;
+  }
+}
+```
+
+- Every method returns `Future<KApiResponse>` with the parsed model in `response.data`.
+- Endpoint naming: `getAll`, `getDetails`, `create`, `update`, `delete` (+ domain verbs like `pay`, `cancel`).
+- Unique `cashKey` per endpoint + params. Writes (post/put/delete) never cache.
+
+## Errors
+
+- An Api method never throws to its caller; failures come back as `KApiResponse` with `success == false`.
+- Wrap parsing in `try/catch`; on a parse failure set `success = false` and a parse error, don't return half data.
+- Classify failures once in the networking layer (no connection / timeout / 4xx / 5xx / parse) on the
+  response (e.g. a typed `error` field), so Controllers branch on the kind, not on raw status codes.
+- User-facing text: `response.getMessageList()` for server messages, `S.of(context)` for generic ones.
+  Never show raw exception strings.
+
+## FilterModel (only for filtered/paged lists)
+
+An enum of filter keys + `page`, `perPage`, `enableCash`; `toJson()` emits `filter[<key>]`, `page`, `per_page`.
+Example: `reference/lib/Models/Customers/CustomersFiltterModel.dart` (file name has a legacy typo —
+name yours `<Feature>FilterModel.dart`).

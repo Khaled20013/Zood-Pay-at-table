@@ -1,0 +1,67 @@
+---
+description: When to use Cubit vs screen Controller, app-wide state, and the new-feature checklist
+alwaysApply: true
+---
+
+# State Management
+
+## Two levels only
+
+| Scope | Tool | Location |
+|---|---|---|
+| One screen | plain `Controller` + `setState` via `refresh()` | `Screens/<Feature>/<Screen>/Controller/` |
+| Whole app | `Cubit` | `lib/Bloc/` |
+
+- Do **not** create a Cubit/Bloc per feature or per screen.
+- Rule of thumb: state goes in `AppCubit` only if it must **outlive the screen** or be **seen by
+  more than one screen** (current user, cart, active session, selected branch). Everything else
+  lives in the screen's Controller.
+- App-wide cubits are provided once in `main.dart` with `MultiBlocProvider`:
+  - `AppCubit` — app-wide data + cross-screen signals.
+  - `LanguageCubit` — locale.
+  - Optional: `ThemeCubit` in `Bloc/` if the app supports theme switching.
+
+## States
+
+- All states live in `Bloc/states.dart`: `@immutable abstract class AppStates`, one subclass per signal.
+- Name them `<Topic>AppStates` (`CartAppStates`, `SessionAppStates`, `ReloadDataAppStates(type)`).
+- Emit a **new instance** every time (carry the changed value or a counter) so `BlocBuilder` rebuilds.
+- `AppCubit` holds the data in fields; the state is the signal. Views read fields from the cubit:
+
+```dart
+BlocBuilder<AppCubit, AppStates>(
+  buildWhen: (_, state) => state is CartAppStates,
+  builder: (context, _) {
+    final cart = AppCubit.get(context).cart;
+    return CartBadge(count: cart.count);
+  },
+)
+```
+
+- Access with `AppCubit.get(context)`; use `BlocBuilder`/`BlocListener` only in Views, never in Controllers.
+  A Controller that needs the cubit receives it (or a callback) from its View.
+- Always use `buildWhen`/`listenWhen` filtered by state type so unrelated signals don't rebuild.
+
+## Keeping AppCubit small
+
+- Group methods by topic with `// MARK: <Topic>` comments.
+- Pure calculations (totals, validation) belong on Models, not in the cubit.
+- If `AppCubit` passes ~400 lines or ~4 unrelated topics, split one topic into another **app-wide**
+  cubit in `Bloc/` (e.g. `CartCubit`) provided in `main.dart` — still never per screen.
+
+## App-wide globals
+
+- `routerMain` (the `GoRouter`) is a top-level global in `main.dart`.
+- Read-only session data loaded once (settings, current branch, config) may be top-level globals in
+  `main.dart`, filled by one loader and cleared on logout/session end. Mutable data that the UI reacts
+  to goes in `AppCubit` instead.
+
+## New feature checklist
+
+1. `Models/<Feature>/` → `<Feature>Model.dart`, `<Feature>Api.dart` (+ `<Feature>FilterModel.dart` for filtered/paged lists).
+2. `Screens/<Feature>/<Screen>/` → copy `_TempScreen`, rename to `<Screen>Controller` + `<Screen>` view, set `routeName`.
+3. `AppRoutes/<Feature>Routes.dart` → `routes()` + `open<Screen>Screen()` per screen; register in `GoRouterApp`.
+4. Shared UI → `Widgets/`; feature-only UI → `Screens/<Feature>/Widgets/`.
+5. Strings → add keys to every `.arb` file, regenerate, use `S.of(context).key`.
+6. Cross-screen refresh → emit a state on `AppCubit` instead of passing controllers around.
+7. Tests → `test/Models/<Feature>/`, `test/Screens/<Feature>/` (→ `testing.mdc`).

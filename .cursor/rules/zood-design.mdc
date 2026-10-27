@@ -46,4 +46,4 @@ Visual reference: Teams / Dot-Ai (`AppColors.primary`). Same brand as Self Order
 
 ## When changing colors
 
-Update `lib/core/theme/app_colors.dart` (and web/Android theme_color if present). Do not reintroduce the old cream/orange PAT palette as brand.
+Update `lib/Styles/AppColors.dart` (and web/Android theme_color if present). Do not reintroduce the old cream/orange PAT palette as brand.
