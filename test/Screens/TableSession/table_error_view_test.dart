@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:zood_pay_at_table/Helper/Errors/AppException.dart';
 import 'package:zood_pay_at_table/Helper/L10n.dart';
+import 'package:zood_pay_at_table/Screens/Onboarding/WelcomeScreen/View/WelcomeScreen.dart';
 import 'package:zood_pay_at_table/Screens/TableSession/QrScanScreen/View/QrScanScreen.dart';
 import 'package:zood_pay_at_table/main.dart';
 import 'package:zood_pay_at_table/Screens/TableSession/Widgets/TableSessionGate.dart';
@@ -20,6 +21,11 @@ void main() {
           name: QrScanScreen.routeName,
           path: QrScanScreen.path,
           builder: (_, _) => const Text('scanner'),
+        ),
+        GoRoute(
+          name: WelcomeScreen.routeName,
+          path: WelcomeScreen.path,
+          builder: (_, _) => const Text('welcome'),
         ),
       ],
     );
@@ -57,5 +63,16 @@ void main() {
 
     expect(find.text('Try again'), findsOneWidget);
     expect(find.text('Scan again'), findsNothing);
+  });
+
+  testWidgets('any table error can go back to enter another link', (
+    tester,
+  ) async {
+    await pump(tester, const ServiceUnavailableException());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Use another table link'));
+    await tester.pumpAndSettle();
+    expect(find.text('welcome'), findsOneWidget);
   });
 }

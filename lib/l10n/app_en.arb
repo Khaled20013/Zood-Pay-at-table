@@ -27,6 +27,7 @@
 
   "scanNotFoundTitle": "We couldn't find this table",
   "backToScan": "Back to scan",
+  "useAnotherTableLink": "Use another table link",
   "findingTable": "Finding your table…",
   "welcomeTo": "Welcome to",
   "tableNumber": "Table {number}",

@@ -12,6 +12,10 @@ class StatusView extends StatelessWidget {
     required this.message,
     this.actionLabel,
     this.onAction,
+    this.actionIcon = Icons.refresh_rounded,
+    this.secondaryLabel,
+    this.onSecondary,
+    this.secondaryIcon,
     this.isError = false,
   });
 
@@ -20,6 +24,10 @@ class StatusView extends StatelessWidget {
   final String message;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final IconData actionIcon;
+  final String? secondaryLabel;
+  final VoidCallback? onSecondary;
+  final IconData? secondaryIcon;
   final bool isError;
 
   @override
@@ -64,7 +72,17 @@ class StatusView extends StatelessWidget {
                   label: actionLabel!,
                   onPressed: onAction,
                   expand: false,
-                  icon: Icons.refresh_rounded,
+                  icon: actionIcon,
+                ),
+              ],
+              if (secondaryLabel != null && onSecondary != null) ...[
+                const SizedBox(height: 12),
+                CustomButton(
+                  label: secondaryLabel!,
+                  onPressed: onSecondary,
+                  expand: false,
+                  icon: secondaryIcon,
+                  variant: CustomButtonVariant.ghost,
                 ),
               ],
             ],

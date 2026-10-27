@@ -217,6 +217,12 @@ abstract class S {
   /// **'Back to scan'**
   String get backToScan;
 
+  /// No description provided for @useAnotherTableLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Use another table link'**
+  String get useAnotherTableLink;
+
   /// No description provided for @findingTable.
   ///
   /// In en, this message translates to:

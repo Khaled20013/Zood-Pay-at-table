@@ -19,6 +19,8 @@ class AppRoutes {
     return lst;
   }
 
+
+//// Splash Screen Routes
   static dynamic openSplashScreen({RouteSettings? settings}) {
     if (settings != null) {
       return GoRoute(
@@ -31,6 +33,8 @@ class AppRoutes {
     }
   }
 
+
+//// Landing Screen Routes
   static dynamic openLandingScreen({RouteSettings? settings}) {
     if (settings != null) {
       return GoRoute(

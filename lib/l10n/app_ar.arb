@@ -26,6 +26,7 @@
 
   "scanNotFoundTitle": "تعذّر العثور على هذه الطاولة",
   "backToScan": "العودة إلى المسح",
+  "useAnotherTableLink": "استخدم رابط طاولة آخر",
   "findingTable": "جارٍ البحث عن طاولتك…",
   "welcomeTo": "مرحبًا بك في",
   "tableNumber": "طاولة {number}",

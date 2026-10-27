@@ -18,7 +18,6 @@ class GoRouterApp {
     List<RouteBase> lst = [];
     List<RouteBase> subList = [];
 
-    // Menu and checkout live under `/pay-at-table/:qrId`, the printed QR link.
     List<RouteBase> tableRoutes = [];
     tableRoutes.addAll(MenuRoutes.routes());
     tableRoutes.addAll(CheckoutRoutes.routes());

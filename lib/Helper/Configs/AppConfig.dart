@@ -2,15 +2,13 @@
 ///
 /// ```sh
 /// flutter run --dart-define=USE_DUMMY_DATA=true
-/// flutter run --dart-define=API_BASE_URL=https://api.zood.ai/api/v1/
+/// flutter run --dart-define=API_BASE_URL=https://dev.api.zood.ai/api/v1/
 /// ```
 abstract final class AppConfig {
   static const String appName = 'Zood Pay-At-Table';
 
-  static const String productionApiBaseUrl = 'https://api.zood.ai/api/v1/';
   static const String devApiBaseUrl = 'https://dev.api.zood.ai/api/v1/';
 
-  /// Dev even in release: the Pay at Table routes are not on production yet.
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: devApiBaseUrl,

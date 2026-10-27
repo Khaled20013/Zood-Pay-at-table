@@ -17,6 +17,8 @@ class TableSessionRoutes {
     return lst;
   }
 
+  //// Qr Scan Screen Routes
+
   static dynamic openQrScanScreen({
     RouteSettings? settings,
     bool replacement = false,
@@ -32,6 +34,7 @@ class TableSessionRoutes {
     }
   }
 
+  //// Table Scan Screen Routes
   /// The printed QR is `https://control.zood.ai/pay-at-table/<qr_id>/menu`.
   static dynamic openTableScanScreen({
     RouteSettings? settings,

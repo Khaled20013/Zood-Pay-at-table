@@ -73,6 +73,9 @@ class SEn extends S {
   String get backToScan => 'Back to scan';
 
   @override
+  String get useAnotherTableLink => 'Use another table link';
+
+  @override
   String get findingTable => 'Finding your table…';
 
   @override

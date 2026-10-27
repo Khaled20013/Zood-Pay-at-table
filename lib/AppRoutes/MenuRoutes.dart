@@ -13,6 +13,7 @@ class MenuRoutes {
     return lst;
   }
 
+  //// Menu Screen Routes
   /// `/pay-at-table/<qr_id>/menu`. [replacement] resets the stack to the
   /// table route + menu (e.g. after paying or from the empty checkout).
   static dynamic openMenuScreen({

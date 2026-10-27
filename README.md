@@ -88,8 +88,8 @@ Compile-time flags (`--dart-define`), defined in
 
 | Key | Default | Purpose |
 | --- | --- | --- |
-| `USE_DUMMY_DATA` | `true` | Serve bundled demo data instead of calling the API |
-| `API_BASE_URL` | release: `https://api.zood.ai/api/v1/`<br>debug: `https://dev.api.zood.ai/api/v1/` | Pay at Table API |
+| `USE_DUMMY_DATA` | `false` | Serve bundled demo data instead of calling the API |
+| `API_BASE_URL` | `https://dev.api.zood.ai/api/v1/` | Pay at Table API |
 | `ENABLE_NETWORK_LOGS` | `true` | Request / response logs in debug builds (card data is masked) |
 | `INITIAL_LOCATION` | empty | Route to open on launch instead of splash → landing |
 

@@ -73,6 +73,9 @@ class SAr extends S {
   String get backToScan => 'العودة إلى المسح';
 
   @override
+  String get useAnotherTableLink => 'استخدم رابط طاولة آخر';
+
+  @override
   String get findingTable => 'جارٍ البحث عن طاولتك…';
 
   @override
