@@ -17,6 +17,8 @@
 
   "welcomeTitle": "Scan the QR code on your table",
   "welcomeBody": "Point your camera at the code on the table stand. The link opens your table here in the app, ready to order and pay.",
+  "welcomeTitleWeb": "Open your table from the link",
+  "welcomeBodyWeb": "Paste the table link from the QR code on your table, or enter the table code, then order and pay in the browser.",
   "welcomeLinkHint": "Paste table link or code",
   "welcomeOpenTable": "Open table",
   "welcomeInvalidLink": "That doesn't look like a table link or code.",

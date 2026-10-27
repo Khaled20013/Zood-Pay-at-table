@@ -107,6 +107,12 @@ class AppCubit extends Cubit<AppStates> {
     await resolveTable(qrId);
   }
 
+  /// Clears a failed / abandoned table so the guest can paste another link
+  /// without the previous QR id sticking around.
+  void clearTableSession() {
+    _setSession(TableSessionStatus.initial, null);
+  }
+
   void _setSession(
     TableSessionStatus status,
     String? qrId, {

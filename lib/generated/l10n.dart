@@ -169,6 +169,18 @@ abstract class S {
   /// **'Point your camera at the code on the table stand. The link opens your table here in the app, ready to order and pay.'**
   String get welcomeBody;
 
+  /// No description provided for @welcomeTitleWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'Open your table from the link'**
+  String get welcomeTitleWeb;
+
+  /// No description provided for @welcomeBodyWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste the table link from the QR code on your table, or enter the table code, then order and pay in the browser.'**
+  String get welcomeBodyWeb;
+
   /// No description provided for @welcomeLinkHint.
   ///
   /// In en, this message translates to:

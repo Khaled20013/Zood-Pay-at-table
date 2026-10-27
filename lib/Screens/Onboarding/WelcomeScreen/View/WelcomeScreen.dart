@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -118,7 +119,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                               begin: 0.28,
                               end: 0.62,
                               child: Text(
-                                l10n.welcomeTitle,
+                                kIsWeb ? l10n.welcomeTitleWeb : l10n.welcomeTitle,
                                 style: textTheme.headlineMedium?.copyWith(
                                   fontWeight: FontWeight.w800,
                                   height: 1.25,
@@ -132,7 +133,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                               begin: 0.38,
                               end: 0.72,
                               child: Text(
-                                l10n.welcomeBody,
+                                kIsWeb ? l10n.welcomeBodyWeb : l10n.welcomeBody,
                                 style: textTheme.bodyMedium?.copyWith(
                                   color: AppColors.inkMuted,
                                   height: 1.55,
@@ -141,33 +142,52 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                               ),
                             ),
                             const SizedBox(height: 28),
-                            Reveal(
-                              animation: _entrance,
-                              begin: 0.5,
-                              end: 0.85,
-                              child: CustomButton(
-                                label: l10n.scanQrCode,
-                                icon: Icons.qr_code_scanner_rounded,
-                                onPressed: _screenController.openScanner,
+                            if (kIsWeb) ...[
+                              Reveal(
+                                animation: _entrance,
+                                begin: 0.5,
+                                end: 0.85,
+                                child: _PasteLinkField(
+                                  controller: _screenController.linkController,
+                                  errorText: _screenController.invalidLink
+                                      ? l10n.welcomeInvalidLink
+                                      : null,
+                                  hintText: l10n.welcomeLinkHint,
+                                  openTooltip: l10n.welcomeOpenTable,
+                                  onChanged: _screenController.onLinkChanged,
+                                  onSubmitted: _openLink,
+                                  onOpen: _openLink,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 22),
-                            Reveal(
-                              animation: _entrance,
-                              begin: 0.62,
-                              end: 1,
-                              child: _PasteLinkField(
-                                controller: _screenController.linkController,
-                                errorText: _screenController.invalidLink
-                                    ? l10n.welcomeInvalidLink
-                                    : null,
-                                hintText: l10n.welcomeLinkHint,
-                                openTooltip: l10n.welcomeOpenTable,
-                                onChanged: _screenController.onLinkChanged,
-                                onSubmitted: _openLink,
-                                onOpen: _openLink,
+                            ] else ...[
+                              Reveal(
+                                animation: _entrance,
+                                begin: 0.5,
+                                end: 0.85,
+                                child: CustomButton(
+                                  label: l10n.scanQrCode,
+                                  icon: Icons.qr_code_scanner_rounded,
+                                  onPressed: _screenController.openScanner,
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 22),
+                              Reveal(
+                                animation: _entrance,
+                                begin: 0.62,
+                                end: 1,
+                                child: _PasteLinkField(
+                                  controller: _screenController.linkController,
+                                  errorText: _screenController.invalidLink
+                                      ? l10n.welcomeInvalidLink
+                                      : null,
+                                  hintText: l10n.welcomeLinkHint,
+                                  openTooltip: l10n.welcomeOpenTable,
+                                  onChanged: _screenController.onLinkChanged,
+                                  onSubmitted: _openLink,
+                                  onOpen: _openLink,
+                                ),
+                              ),
+                            ],
                             const SizedBox(height: 20),
                             Reveal(
                               animation: _entrance,

@@ -47,6 +47,13 @@ class SEn extends S {
       'Point your camera at the code on the table stand. The link opens your table here in the app, ready to order and pay.';
 
   @override
+  String get welcomeTitleWeb => 'Open your table from the link';
+
+  @override
+  String get welcomeBodyWeb =>
+      'Paste the table link from the QR code on your table, or enter the table code, then order and pay in the browser.';
+
+  @override
   String get welcomeLinkHint => 'Paste table link or code';
 
   @override

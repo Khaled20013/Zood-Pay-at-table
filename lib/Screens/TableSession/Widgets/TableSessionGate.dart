@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -56,16 +57,25 @@ class _TableSessionGateState extends State<TableSessionGate> {
 }
 
 /// `404` / `410` QRs show their message with no retry; anything else
-/// offers **Try again**. Both always offer going back to enter another link.
+/// offers **Try again**. Both always offer going back to enter another link
+/// (on web that is the primary escape when the QR itself is invalid, since
+/// the camera scanner is not the main path).
 class TableErrorView extends StatelessWidget {
   const TableErrorView({super.key, required this.error});
 
   final AppException? error;
 
+  void _startOver(BuildContext context) {
+    AppCubit.get(context).clearTableSession();
+    OnboardingRoutes.openWelcomeScreen(replacement: true);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = S.of(context);
     final canRetry = error?.canRetry ?? true;
+    // Invalid QR: web opens paste-link start; phone can rescan the camera.
+    final openLinkAsPrimary = !canRetry && kIsWeb;
     return StatusView(
       isError: error is! ServiceUnavailableException,
       icon: switch (error) {
@@ -76,16 +86,24 @@ class TableErrorView extends StatelessWidget {
       },
       title: l10n.tableErrorTitle(error),
       message: l10n.tableErrorMessage(error),
-      actionLabel: canRetry ? l10n.tryAgain : l10n.scanAgain,
+      actionLabel: canRetry
+          ? l10n.tryAgain
+          : openLinkAsPrimary
+              ? l10n.useAnotherTableLink
+              : l10n.scanAgain,
       actionIcon: canRetry
           ? Icons.refresh_rounded
-          : Icons.qr_code_scanner_rounded,
+          : openLinkAsPrimary
+              ? Icons.link_rounded
+              : Icons.qr_code_scanner_rounded,
       onAction: canRetry
           ? () => AppCubit.get(context).retrySession()
-          : () => TableSessionRoutes.openQrScanScreen(replacement: true),
-      secondaryLabel: l10n.useAnotherTableLink,
+          : openLinkAsPrimary
+              ? () => _startOver(context)
+              : () => TableSessionRoutes.openQrScanScreen(replacement: true),
+      secondaryLabel: openLinkAsPrimary ? null : l10n.useAnotherTableLink,
       secondaryIcon: Icons.link_rounded,
-      onSecondary: () => OnboardingRoutes.openWelcomeScreen(replacement: true),
+      onSecondary: openLinkAsPrimary ? null : () => _startOver(context),
     );
   }
 }

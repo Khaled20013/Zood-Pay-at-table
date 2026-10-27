@@ -47,6 +47,13 @@ class SAr extends S {
       'وجّه كاميرا هاتفك نحو الرمز الموجود على حامل الطاولة، وسيفتح الرابط طاولتك هنا في التطبيق جاهزةً للطلب والدفع.';
 
   @override
+  String get welcomeTitleWeb => 'افتح طاولتك من الرابط';
+
+  @override
+  String get welcomeBodyWeb =>
+      'الصق رابط الطاولة من رمز QR على طاولتك، أو أدخِل رمز الطاولة، ثم اطلب وادفع من المتصفح.';
+
+  @override
   String get welcomeLinkHint => 'الصق رابط الطاولة أو رمزها';
 
   @override
